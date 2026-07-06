@@ -38,11 +38,10 @@
 	"upload_source_maps": true,
 	"d1_databases": [
 		{
-			"binding": "DB",
-			"database_name": "mileage-tracker-db",
-			"database_id": "6a575bb4-3c4e-49a1-84e1-723eecff6f10",
-			"migrations_dir": "migrations"
-		}
+      "binding": "mileage_tracker_db",
+      "database_name": "mileage-tracker-db",
+      "database_id": "ded74bde-db3c-4ed1-97b8-bc26e3e8f9e5",
+    }
 	]
 	/**
 	 * Smart Placement
