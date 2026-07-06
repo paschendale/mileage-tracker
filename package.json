@@ -11,7 +11,12 @@
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "cf-typegen": "wrangler types --env-interface CloudflareEnv ./cloudflare-env.d.ts"
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv ./cloudflare-env.d.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply mileage-tracker-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply mileage-tracker-db --remote",
+    "db:seed": "tsx scripts/generate-seed-sql.ts && wrangler d1 execute mileage-tracker-db --local --file=./scripts/seed.sql",
+    "db:seed:remote": "tsx scripts/generate-seed-sql.ts && wrangler d1 execute mileage-tracker-db --remote --file=./scripts/seed.sql"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
