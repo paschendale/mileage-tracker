@@ -2,6 +2,7 @@
 
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ChartCard } from "@/components/charts/chart-card";
+import { chartTooltipContentStyle, chartTooltipItemStyle, chartTooltipLabelStyle } from "@/components/charts/tooltip-style";
 import { formatNumber } from "@/lib/format";
 import type { MonthlyAggregate } from "@/services/stats";
 
@@ -14,6 +15,9 @@ export function MonthlyLitersChart({ data }: { data: MonthlyAggregate[] }) {
 					<XAxis dataKey="month" tick={{ fontSize: 11 }} minTickGap={16} />
 					<YAxis tick={{ fontSize: 11 }} width={40} />
 					<Tooltip
+						contentStyle={chartTooltipContentStyle}
+						labelStyle={chartTooltipLabelStyle}
+						itemStyle={chartTooltipItemStyle}
 						formatter={(value) => [`${formatNumber(Number(value), { maximumFractionDigits: 1 })} L`, "Liters"]}
 					/>
 					<Bar dataKey="totalLiters" fill="var(--chart-4)" radius={[4, 4, 0, 0]} animationDuration={400} />

@@ -2,6 +2,7 @@
 
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ChartCard } from "@/components/charts/chart-card";
+import { chartTooltipContentStyle, chartTooltipItemStyle, chartTooltipLabelStyle } from "@/components/charts/tooltip-style";
 import { formatCurrency, formatDateDisplay } from "@/lib/format";
 
 interface FuelPricePoint {
@@ -23,6 +24,9 @@ export function FuelPriceChart({ points }: { points: FuelPricePoint[] }) {
 					/>
 					<YAxis tick={{ fontSize: 11 }} width={48} />
 					<Tooltip
+						contentStyle={chartTooltipContentStyle}
+						labelStyle={chartTooltipLabelStyle}
+						itemStyle={chartTooltipItemStyle}
 						formatter={(value) => [formatCurrency(Number(value)), "Price/L"]}
 						labelFormatter={(label) => formatDateDisplay(String(label))}
 					/>

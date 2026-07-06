@@ -2,6 +2,7 @@
 
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ChartCard } from "@/components/charts/chart-card";
+import { chartTooltipContentStyle, chartTooltipItemStyle, chartTooltipLabelStyle } from "@/components/charts/tooltip-style";
 import { formatDateDisplay, formatNumber } from "@/lib/format";
 
 interface ConsumptionPoint {
@@ -23,6 +24,9 @@ export function ConsumptionChart({ points }: { points: ConsumptionPoint[] }) {
 					/>
 					<YAxis tick={{ fontSize: 11 }} width={40} />
 					<Tooltip
+						contentStyle={chartTooltipContentStyle}
+						labelStyle={chartTooltipLabelStyle}
+						itemStyle={chartTooltipItemStyle}
 						formatter={(value) => [`${formatNumber(Number(value), { maximumFractionDigits: 2 })} km/L`, "Consumption"]}
 						labelFormatter={(label) => formatDateDisplay(String(label))}
 					/>
