@@ -7,6 +7,12 @@ export async function getFillUpsByVehicleId(vehicleId: number): Promise<FillUp[]
 	return db.select().from(fillUps).where(eq(fillUps.vehicleId, vehicleId));
 }
 
+export async function getFillUpById(id: number): Promise<FillUp | undefined> {
+	const db = getDb();
+	const [fillUp] = await db.select().from(fillUps).where(eq(fillUps.id, id));
+	return fillUp;
+}
+
 export async function getFillUpCountsByVehicle(): Promise<Record<number, number>> {
 	const db = getDb();
 	const rows = await db
