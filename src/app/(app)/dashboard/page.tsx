@@ -1,3 +1,4 @@
+import { ChartsSection } from "@/features/dashboard/components/charts-section";
 import { getDashboardData } from "@/features/dashboard/lib/get-dashboard-data";
 import { RecentFillUpsTable } from "@/features/dashboard/components/recent-fillups-table";
 import { StatsGrid } from "@/features/dashboard/components/stats-grid";
@@ -28,6 +29,8 @@ export default async function DashboardPage() {
 			</div>
 
 			<StatsGrid data={data} />
+
+			<ChartsSection fillUps={data.fillUps} />
 
 			<div>
 				<h2 className="mb-3 text-lg font-semibold tracking-tight">Recent fill-ups</h2>
