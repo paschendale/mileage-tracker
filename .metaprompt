@@ -1,0 +1,7 @@
+# Mileage Tracker — agent entry point
+
+Status: **fully implemented**. Before starting any task, read `docs/ai/INDEX.md` and load only the specific doc(s) it points you to for your task — don't load everything up front.
+
+Human setup/deploy steps: `README.md`.
+
+The original product spec (already fully built, historical reference only): `docs/ai/original-spec.md`.
