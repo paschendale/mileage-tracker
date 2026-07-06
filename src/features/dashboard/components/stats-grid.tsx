@@ -1,6 +1,6 @@
+import { StatCard } from "@/components/stat-card";
 import { formatCurrency, formatNumber } from "@/lib/format";
 import type { DashboardData } from "../lib/get-dashboard-data";
-import { StatCard } from "./stat-card";
 
 export function StatsGrid({ data }: { data: DashboardData }) {
 	return (
