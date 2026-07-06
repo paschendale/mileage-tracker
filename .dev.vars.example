@@ -1,0 +1,3 @@
+# Copy to .dev.vars for local development (gitignored, never commit real secrets)
+NEXTJS_ENV=development
+AUTH_TOKEN=change-me
