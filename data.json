@@ -1,0 +1,408 @@
+[
+  {
+    "date": "2025-11-07",
+    "odometer_km": 0,
+    "cost_brl": 278.0,
+    "liters": 39.15,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": null,
+    "consumption_km_per_l": null
+  },
+  {
+    "date": "2025-11-12",
+    "odometer_km": 477,
+    "cost_brl": 192.68,
+    "liters": 41.26,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 477,
+    "consumption_km_per_l": 11.56
+  },
+  {
+    "date": "2025-11-18",
+    "odometer_km": 904,
+    "cost_brl": 271.48,
+    "liters": 42.09,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 427,
+    "consumption_km_per_l": 10.14
+  },
+  {
+    "date": "2025-11-20",
+    "odometer_km": 988,
+    "cost_brl": 46.63,
+    "liters": 7.23,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 84,
+    "consumption_km_per_l": 11.62
+  },
+  {
+    "date": "2025-11-20",
+    "odometer_km": 1220,
+    "cost_brl": 105.48,
+    "liters": 17.04,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 232,
+    "consumption_km_per_l": 13.62
+  },
+  {
+    "date": "2025-11-20",
+    "odometer_km": 1612,
+    "cost_brl": 181.75,
+    "liters": 31.39,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 392,
+    "consumption_km_per_l": 12.49
+  },
+  {
+    "date": "2025-11-21",
+    "odometer_km": 1955,
+    "cost_brl": 170.88,
+    "liters": 28.72,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 343,
+    "consumption_km_per_l": 11.94
+  },
+  {
+    "date": "2025-11-23",
+    "odometer_km": 2184,
+    "cost_brl": 138.75,
+    "liters": 21.68,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 229,
+    "consumption_km_per_l": 10.56
+  },
+  {
+    "date": "2025-11-23",
+    "odometer_km": 2510,
+    "cost_brl": 153.13,
+    "liters": 24.94,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 326,
+    "consumption_km_per_l": 13.07
+  },
+  {
+    "date": "2025-11-23",
+    "odometer_km": 2873,
+    "cost_brl": 174.17,
+    "liters": 29.57,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 363,
+    "consumption_km_per_l": 12.28
+  },
+  {
+    "date": "2025-11-25",
+    "odometer_km": 3282,
+    "cost_brl": 214.67,
+    "liters": 34.13,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 409,
+    "consumption_km_per_l": 11.98
+  },
+  {
+    "date": "2025-12-04",
+    "odometer_km": 3776,
+    "cost_brl": 264.76,
+    "liters": 41.58,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 494,
+    "consumption_km_per_l": 11.88
+  },
+  {
+    "date": "2025-12-13",
+    "odometer_km": 4338,
+    "cost_brl": 248.68,
+    "liters": 39.98,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 562,
+    "consumption_km_per_l": 14.06
+  },
+  {
+    "date": "2025-12-19",
+    "odometer_km": 4766,
+    "cost_brl": 202.32,
+    "liters": 31.22,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 428,
+    "consumption_km_per_l": 13.71
+  },
+  {
+    "date": "2025-12-20",
+    "odometer_km": 4994,
+    "cost_brl": 92.29,
+    "liters": 15.81,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 228,
+    "consumption_km_per_l": 14.42
+  },
+  {
+    "date": "2025-12-20",
+    "odometer_km": 5336,
+    "cost_brl": 159.57,
+    "liters": 26.36,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 342,
+    "consumption_km_per_l": 12.97
+  },
+  {
+    "date": "2025-12-28",
+    "odometer_km": 5687,
+    "cost_brl": 199.04,
+    "liters": 33.45,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 351,
+    "consumption_km_per_l": 10.49
+  },
+  {
+    "date": "2025-12-28",
+    "odometer_km": 6085,
+    "cost_brl": 186.38,
+    "liters": 37.11,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 398,
+    "consumption_km_per_l": 10.72
+  },
+  {
+    "date": "2025-12-29",
+    "odometer_km": 6562,
+    "cost_brl": 242.85,
+    "liters": 37.48,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 477,
+    "consumption_km_per_l": 12.73
+  },
+  {
+    "date": "2026-01-09",
+    "odometer_km": 7064,
+    "cost_brl": 269.25,
+    "liters": 40.96,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 502,
+    "consumption_km_per_l": 12.26
+  },
+  {
+    "date": "2026-02-03",
+    "odometer_km": 7544,
+    "cost_brl": 263.8,
+    "liters": 40.64,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 480,
+    "consumption_km_per_l": 11.81
+  },
+  {
+    "date": "2026-02-14",
+    "odometer_km": 7888,
+    "cost_brl": 181.5,
+    "liters": 28.14,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 344,
+    "consumption_km_per_l": 12.22
+  },
+  {
+    "date": "2026-02-17",
+    "odometer_km": 8419,
+    "cost_brl": 246.21,
+    "liters": 38.35,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 531,
+    "consumption_km_per_l": 13.85
+  },
+  {
+    "date": "2026-03-06",
+    "odometer_km": 8927,
+    "cost_brl": 268.67,
+    "liters": 41.59,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 508,
+    "consumption_km_per_l": 12.21
+  },
+  {
+    "date": "2026-03-12",
+    "odometer_km": 9191,
+    "cost_brl": 146.46,
+    "liters": 22.36,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 264,
+    "consumption_km_per_l": 11.81
+  },
+  {
+    "date": "2026-03-12",
+    "odometer_km": 9411,
+    "cost_brl": 83.82,
+    "liters": 13.0,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 220,
+    "consumption_km_per_l": 16.92
+  },
+  {
+    "date": "2026-03-13",
+    "odometer_km": 9759,
+    "cost_brl": 157.38,
+    "liters": 26.04,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 348,
+    "consumption_km_per_l": 13.36
+  },
+  {
+    "date": "2026-03-15",
+    "odometer_km": 10235,
+    "cost_brl": 246.05,
+    "liters": 35.2,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 476,
+    "consumption_km_per_l": 13.52
+  },
+  {
+    "date": "2026-03-15",
+    "odometer_km": 10705,
+    "cost_brl": 220.44,
+    "liters": 34.77,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 470,
+    "consumption_km_per_l": 13.52
+  },
+  {
+    "date": "2026-03-15",
+    "odometer_km": 11195,
+    "cost_brl": 261.43,
+    "liters": 38.73,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 490,
+    "consumption_km_per_l": 12.65
+  },
+  {
+    "date": "2026-03-28",
+    "odometer_km": 11725,
+    "cost_brl": 246.46,
+    "liters": 39.88,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 530,
+    "consumption_km_per_l": 13.29
+  },
+  {
+    "date": "2026-04-16",
+    "odometer_km": 12234,
+    "cost_brl": 260.91,
+    "liters": 39.83,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 509,
+    "consumption_km_per_l": 12.78
+  },
+  {
+    "date": "2026-04-29",
+    "odometer_km": 12713,
+    "cost_brl": 225.7,
+    "liters": 37.06,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 479,
+    "consumption_km_per_l": 12.92
+  },
+  {
+    "date": "2026-04-30",
+    "odometer_km": 12973,
+    "cost_brl": 135.69,
+    "liters": 21.07,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 260,
+    "consumption_km_per_l": 12.34
+  },
+  {
+    "date": "2026-04-30",
+    "odometer_km": 13315,
+    "cost_brl": 163.43,
+    "liters": 25.98,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 342,
+    "consumption_km_per_l": 13.16
+  },
+  {
+    "date": "2026-04-30",
+    "odometer_km": 13617,
+    "cost_brl": 158.82,
+    "liters": 24.8,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 302,
+    "consumption_km_per_l": 12.18
+  },
+  {
+    "date": "2026-04-30",
+    "odometer_km": 13985,
+    "cost_brl": 105.99,
+    "liters": 16.85,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 368,
+    "consumption_km_per_l": 21.84
+  },
+  {
+    "date": "2026-04-30",
+    "odometer_km": 14201,
+    "cost_brl": 158.02,
+    "liters": 24.5,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 216,
+    "consumption_km_per_l": 8.82
+  },
+  {
+    "date": "2026-05-08",
+    "odometer_km": 14746,
+    "cost_brl": 268.69,
+    "liters": 40.835,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 545,
+    "consumption_km_per_l": 13.35
+  },
+  {
+    "date": "2026-05-13",
+    "odometer_km": 15313,
+    "cost_brl": 251.87,
+    "liters": 38.22,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 567,
+    "consumption_km_per_l": 14.84
+  },
+  {
+    "date": "2026-05-25",
+    "odometer_km": 15816,
+    "cost_brl": 269.63,
+    "liters": 41.61,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 503,
+    "consumption_km_per_l": 12.09
+  },
+  {
+    "date": "2026-06-12",
+    "odometer_km": 16293,
+    "cost_brl": 258.02,
+    "liters": 38.92,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 477,
+    "consumption_km_per_l": 12.26
+  },
+  {
+    "date": "2026-06-20",
+    "odometer_km": 16660,
+    "cost_brl": 187.35,
+    "liters": 28.17,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 367,
+    "consumption_km_per_l": 13.03
+  },
+  {
+    "date": "2026-06-21",
+    "odometer_km": 17034,
+    "cost_brl": 157.32,
+    "liters": 24.24,
+    "fuel_type": "gasoline",
+    "distance_since_last_km": 374,
+    "consumption_km_per_l": 15.43
+  },
+  {
+    "date": "2026-07-06",
+    "odometer_km": 17579,
+    "cost_brl": 154.53,
+    "liters": 40.72,
+    "fuel_type": "alcohol",
+    "note": "álcool",
+    "distance_since_last_km": 545,
+    "consumption_km_per_l": 13.38
+  }
+]
