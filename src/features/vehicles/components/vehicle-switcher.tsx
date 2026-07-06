@@ -45,7 +45,7 @@ export function VehicleSwitcher({
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end">
 				{vehicles.map((vehicle) => (
-					<DropdownMenuItem key={vehicle.id} onSelect={() => handleSelect(vehicle)} className="gap-2">
+					<DropdownMenuItem key={vehicle.id} onClick={() => handleSelect(vehicle)} className="gap-2">
 						<VehicleThumbnail vehicle={vehicle} />
 						{vehicle.name}
 					</DropdownMenuItem>
