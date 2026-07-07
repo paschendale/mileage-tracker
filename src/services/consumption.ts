@@ -97,9 +97,19 @@ export function withComputedMetrics<T extends MinimalFillUp>(rowsUnordered: read
 	}
 
 	const indexById = new Map(rows.map((row, i) => [row.id, i]));
-	for (const interval of findFullTankIntervals(rows)) {
+	const intervals = findFullTankIntervals(rows);
+	for (const interval of intervals) {
 		const closeIndex = indexById.get(interval.close.id)!;
 		result[closeIndex]!.consumptionKmPerL = interval.consumptionKmPerL;
+	}
+
+	// The very first full tank in a vehicle's history can never be a "closing" row
+	// (there's no earlier full tank to pair it with), so under the rule above it
+	// would stay null forever even though the interval it opens is fully known.
+	// Mirror that first interval's value onto it too, so a car's very first
+	// fill-up isn't permanently blank.
+	if (rows[0]?.isFullTank && intervals.length > 0) {
+		result[0]!.consumptionKmPerL = intervals[0]!.consumptionKmPerL;
 	}
 
 	return result;

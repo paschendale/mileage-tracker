@@ -6,8 +6,8 @@
 
 Rules, implemented in `withComputedMetrics()`:
 - Distance since previous = `current.odometerKm - previous.odometerKm`, defined for every consecutive pair (full or partial), after sorting by odometer.
-- Consumption is defined **only** between two full-tank fill-ups. Walk the indices of `isFullTank` rows; for each consecutive pair, sum the `liters` of every row strictly after the opening full tank through the closing full tank inclusive (partials + the closing fill), divide the odometer delta by that sum, assign the result to the closing row only. Every other row's consumption is `null`.
-- Worked example from the spec (also a test case): Full@450km/40L, Partial@700km/10L, Full@900km/25L → `(900-450)/(10+25) ≈ 12.857`, assigned to the 900km row.
+- Consumption is defined **only** between two full-tank fill-ups. Walk the indices of `isFullTank` rows; for each consecutive pair, sum the `liters` of every row strictly after the opening full tank through the closing full tank inclusive (partials + the closing fill), divide the odometer delta by that sum, assign the result to the closing row. Every other row's consumption is `null` — **except** the very first full tank in the vehicle's whole history, which can never be anyone's closing row (there's no earlier full tank to pair it with) and would otherwise stay null forever; it mirrors the value of the first interval it opens instead, if one exists.
+- Worked example from the spec (also a test case): Full@450km/40L, Partial@700km/10L, Full@900km/25L → `(900-450)/(10+25) ≈ 12.857`, assigned to the 900km row **and** mirrored onto the 450km row (the opening full tank of the vehicle's very first interval).
 
 Tests in `consumption.test.ts` cover the worked example, a 2-partial chain, boundary cases (no closing full tank), and a cross-check against a real 6-row slice of `data.json`.
 

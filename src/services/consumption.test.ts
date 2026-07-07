@@ -19,13 +19,37 @@ describe("withComputedMetrics", () => {
 
 		const result = withComputedMetrics(rows);
 
-		expect(result[0]!.consumptionKmPerL).toBeNull();
+		// The opening full tank (450km) mirrors the interval it opens, since it can
+		// never be anyone's "closing" row and would otherwise be permanently null.
+		expect(result[0]!.consumptionKmPerL).toBeCloseTo((900 - 450) / (10 + 25), 5);
 		expect(result[1]!.consumptionKmPerL).toBeNull();
 		expect(result[2]!.consumptionKmPerL).toBeCloseTo((900 - 450) / (10 + 25), 5);
 
 		expect(result[0]!.distanceSincePreviousKm).toBeNull();
 		expect(result[1]!.distanceSincePreviousKm).toBe(250);
 		expect(result[2]!.distanceSincePreviousKm).toBe(200);
+	});
+
+	it("mirrors the first interval's consumption onto the very first full tank of a vehicle's history", () => {
+		// This is the case that can never otherwise get a value: it has no
+		// preceding full tank, so under the base rule it would stay null forever.
+		const rows = [row(1, 0, 40, true), row(2, 477, 41.26, true)];
+
+		const result = withComputedMetrics(rows);
+
+		expect(result[1]!.consumptionKmPerL).toBeCloseTo(477 / 41.26, 5);
+		expect(result[0]!.consumptionKmPerL).toBeCloseTo(477 / 41.26, 5);
+	});
+
+	it("does not mirror onto the first row when it isn't itself a full tank", () => {
+		const rows = [row(1, 0, 40, false), row(2, 300, 35, true), row(3, 600, 30, true)];
+
+		const result = withComputedMetrics(rows);
+
+		// row 1 opens no interval of its own (it's a partial before the first full
+		// tank) -- it has nothing to mirror and correctly stays null.
+		expect(result[0]!.consumptionKmPerL).toBeNull();
+		expect(result[2]!.consumptionKmPerL).toBeCloseTo(300 / 30, 5);
 	});
 
 	it("handles a chain of two consecutive partials between two full tanks", () => {
