@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { FuelType } from "@/db/schema";
-import { computeFuelRecommendation, computeFuelTypeStats, type FuelComparisonFillUp } from "./fuel-comparison";
+import {
+	computeFuelRecommendation,
+	computeFuelTypeStats,
+	computeMonthlyFuelPriceTrend,
+	type FuelComparisonFillUp,
+} from "./fuel-comparison";
 
 function row(
 	id: number,
@@ -163,5 +168,26 @@ describe("computeFuelRecommendation", () => {
 		expect(recommendation.recommended).toBeNull();
 		expect(recommendation.reason).toBe("tie");
 		expect(recommendation.deltaPercent).toBe(0);
+	});
+});
+
+describe("computeMonthlyFuelPriceTrend", () => {
+	it("computes a per-fuel avg price/L per month, leaving a fuel null in months with no purchase", () => {
+		const rows = [
+			row(1, 0, 40, 200, "gasoline", true, "2026-01-05"), // 5.00/L
+			row(2, 400, 38, 209, "gasoline", true, "2026-01-20"), // 5.50/L
+			row(3, 800, 35, 210, "ethanol", true, "2026-02-01"), // 6.00/L
+		];
+
+		const trend = computeMonthlyFuelPriceTrend(rows);
+
+		expect(trend).toEqual([
+			{ month: "2026-01", gasoline: (200 + 209) / (40 + 38), ethanol: null },
+			{ month: "2026-02", gasoline: null, ethanol: 6 },
+		]);
+	});
+
+	it("returns an empty array for no rows", () => {
+		expect(computeMonthlyFuelPriceTrend([])).toEqual([]);
 	});
 });

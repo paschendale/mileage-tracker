@@ -1,4 +1,5 @@
-import type { FuelType } from "@/db/schema";
+import { FUEL_TYPES, type FuelType } from "@/db/schema";
+import { groupBy } from "@/utils/group-by";
 import { findFullTankIntervals, sortByOdometer, type MinimalFillUp } from "./consumption";
 
 export interface FuelComparisonFillUp extends MinimalFillUp {
@@ -125,4 +126,33 @@ export function computeFuelRecommendation(
 	const deltaPercent = ((higher - lower) / higher) * 100;
 
 	return { recommended, reason, gasoline, ethanol, deltaPercent };
+}
+
+export interface MonthlyFuelPricePoint {
+	month: string; // 'YYYY-MM'
+	gasoline: number | null;
+	ethanol: number | null;
+}
+
+/**
+ * Avg price/L per fuel per month (sum totalPrice / sum liters within the
+ * month+fuel bucket) — a fuel with no purchases that month is left `null`
+ * rather than interpolated, since we don't know what it would have cost.
+ */
+export function computeMonthlyFuelPriceTrend(rows: readonly FuelComparisonFillUp[]): MonthlyFuelPricePoint[] {
+	const months = groupBy(rows, (r) => r.date.slice(0, 7));
+
+	return [...months.entries()]
+		.map(([month, monthRows]) => {
+			const point: MonthlyFuelPricePoint = { month, gasoline: null, ethanol: null };
+			for (const fuelType of FUEL_TYPES) {
+				const fuelRows = monthRows.filter((r) => r.fuelType === fuelType);
+				const liters = fuelRows.reduce((sum, r) => sum + r.liters, 0);
+				if (liters > 0) {
+					point[fuelType] = fuelRows.reduce((sum, r) => sum + r.totalPrice, 0) / liters;
+				}
+			}
+			return point;
+		})
+		.sort((a, b) => a.month.localeCompare(b.month));
 }

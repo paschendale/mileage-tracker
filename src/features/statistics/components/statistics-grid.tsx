@@ -2,38 +2,13 @@ import { StatCard } from "@/components/stat-card";
 import { formatCurrency, formatNumber } from "@/lib/format";
 import type { StatisticsData } from "../queries/get-statistics";
 
+/** Vehicle-level totals only — fuel-specific numbers live in the fuel comparison table below. */
 export function StatisticsGrid({ data }: { data: StatisticsData }) {
 	return (
 		<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-			<StatCard
-				label="Avg. consumption"
-				value={data.avgKmPerL !== null ? `${formatNumber(data.avgKmPerL, { maximumFractionDigits: 2 })} km/L` : "—"}
-			/>
-			<StatCard
-				label="Best consumption"
-				value={
-					data.bestConsumption !== null
-						? `${formatNumber(data.bestConsumption, { maximumFractionDigits: 2 })} km/L`
-						: "—"
-				}
-			/>
-			<StatCard
-				label="Worst consumption"
-				value={
-					data.worstConsumption !== null
-						? `${formatNumber(data.worstConsumption, { maximumFractionDigits: 2 })} km/L`
-						: "—"
-				}
-			/>
-			<StatCard
-				label="Avg. fuel price"
-				value={data.avgFuelPrice !== null ? formatCurrency(data.avgFuelPrice) : "—"}
-			/>
-			<StatCard
-				label="Avg. cost/km"
-				value={data.avgCostPerKm !== null ? formatCurrency(data.avgCostPerKm) : "—"}
-			/>
+			<StatCard label="Fill-ups" value={String(data.fillUpCount)} />
 			<StatCard label="Distance traveled" value={`${formatNumber(data.distanceTraveled)} km`} />
+			<StatCard label="Total spent" value={formatCurrency(data.totalSpent)} />
 			<StatCard label="Fuel consumed" value={`${formatNumber(data.totalLiters, { maximumFractionDigits: 1 })} L`} />
 			<StatCard
 				label="Avg. monthly distance"

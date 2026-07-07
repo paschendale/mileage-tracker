@@ -1,4 +1,6 @@
+import { FuelComparisonTable } from "@/features/statistics/components/fuel-comparison-table";
 import { SpendingBreakdownTables } from "@/features/statistics/components/spending-breakdown-tables";
+import { StatisticsChartsSection } from "@/features/statistics/components/statistics-charts-section";
 import { StatisticsGrid } from "@/features/statistics/components/statistics-grid";
 import { getStatisticsData } from "@/features/statistics/queries/get-statistics";
 import { getSelectedVehicleContext } from "@/lib/selected-vehicle";
@@ -24,6 +26,10 @@ export default async function StatisticsPage() {
 			<h1 className="text-2xl font-semibold tracking-tight">Statistics</h1>
 
 			<StatisticsGrid data={data} />
+
+			<FuelComparisonTable perFuel={data.perFuel} />
+
+			<StatisticsChartsSection priceTrend={data.priceTrend} />
 
 			<SpendingBreakdownTables monthly={data.monthly} yearly={data.yearly} />
 		</div>

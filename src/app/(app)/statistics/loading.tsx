@@ -6,7 +6,12 @@ export default function StatisticsLoading() {
 	return (
 		<div className="flex flex-col gap-6 p-6 md:p-8">
 			<Skeleton className="h-7 w-32" />
-			<StatsGridSkeleton />
+			<StatsGridSkeleton count={6} />
+			<div>
+				<Skeleton className="mb-3 h-6 w-48" />
+				<TableSkeleton rows={10} columns={3} />
+			</div>
+			<Skeleton className="h-[21.5rem] w-full rounded-xl" />
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				<div>
 					<Skeleton className="mb-3 h-6 w-36" />
