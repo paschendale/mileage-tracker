@@ -67,7 +67,14 @@ export async function getFillUpsPage(
 	const dir = options.dir ?? "desc";
 	const sorted = [...filtered].sort((a, b) => {
 		const cmp = compareRows(a, b, sort);
-		return dir === "asc" ? cmp : -cmp;
+		if (cmp !== 0) return dir === "asc" ? cmp : -cmp;
+		// `date` only has day precision, so same-day rows can otherwise land in
+		// arbitrary order. Odometer strictly increases with real events, so it's
+		// the true chronological tie-break — applied in the same direction as the
+		// primary sort, so a "desc" (most-recent-first) list stays most-recent-first
+		// within a tied day too, instead of flipping to oldest-first locally.
+		const odometerCmp = a.odometerKm - b.odometerKm || a.id - b.id;
+		return dir === "asc" ? odometerCmp : -odometerCmp;
 	});
 
 	return paginate(sorted, options.page ?? 1, options.pageSize ?? 15);
