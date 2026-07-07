@@ -1,7 +1,7 @@
 import type { FillUp, FuelType, Vehicle } from "@/db/schema";
 import { FUEL_TYPES } from "@/db/schema";
 import type { WithMetrics } from "@/services/consumption";
-import { computeFuelRecommendation, computeFuelTypeStats, type FuelRecommendation, type FuelTypeStats } from "@/services/fuel-comparison";
+import { computeFuelTypeStats, type FuelTypeStats } from "@/services/fuel-comparison";
 import { getVehicleFillUpsWithMetrics } from "@/services/fillups";
 import { computeDaysSinceLastFillUp } from "@/services/stats";
 
@@ -10,7 +10,6 @@ export interface DashboardData {
 	fillUps: WithMetrics<FillUp>[];
 	daysSinceLastFillUp: number | null;
 	perFuel: Record<FuelType, FuelTypeStats>;
-	recommendation: FuelRecommendation;
 	/** Fuel type of the most recent fill-up — the fuel switcher's default selection. */
 	lastFillUpFuelType: FuelType;
 }
@@ -36,7 +35,6 @@ export async function getDashboardData(vehicle: Vehicle): Promise<DashboardData>
 		fillUps,
 		daysSinceLastFillUp: computeDaysSinceLastFillUp(fillUps),
 		perFuel,
-		recommendation: computeFuelRecommendation(fillUps, vehicle.tankCapacityLiters),
 		lastFillUpFuelType: findLastFillUpFuelType(fillUps),
 	};
 }

@@ -5,7 +5,25 @@ import {
 	computeFuelTypeStats,
 	computeMonthlyFuelPriceTrend,
 	type FuelComparisonFillUp,
+	type FuelTypeStats,
 } from "./fuel-comparison";
+
+function fuelTypeStats(overrides: Partial<FuelTypeStats> & Pick<FuelTypeStats, "fuelType">): FuelTypeStats {
+	return {
+		avgKmPerL: null,
+		estimatedAutonomyKm: null,
+		distanceTraveledKm: 0,
+		intervalCount: 0,
+		latestPricePerLiter: null,
+		latestFillUpDate: null,
+		avgCostPerKm: null,
+		avgFuelPrice: null,
+		totalSpent: 0,
+		totalLiters: 0,
+		fillUpCount: 0,
+		...overrides,
+	};
+}
 
 function row(
 	id: number,
@@ -81,6 +99,7 @@ describe("computeFuelTypeStats", () => {
 
 		expect(gasoline.avgFuelPrice).toBeCloseTo((200 + 220) / (40 + 38), 5);
 		expect(gasoline.latestPricePerLiter).toBeCloseTo(220 / 38, 5);
+		expect(gasoline.latestFillUpDate).toBe("2026-02-01");
 		expect(gasoline.totalSpent).toBe(420);
 		expect(gasoline.totalLiters).toBe(78);
 		expect(gasoline.fillUpCount).toBe(2);
@@ -94,6 +113,7 @@ describe("computeFuelTypeStats", () => {
 		expect(ethanol.avgKmPerL).toBeNull();
 		expect(ethanol.estimatedAutonomyKm).toBeNull();
 		expect(ethanol.latestPricePerLiter).toBeNull();
+		expect(ethanol.latestFillUpDate).toBeNull();
 		expect(ethanol.avgCostPerKm).toBeNull();
 		expect(ethanol.avgFuelPrice).toBeNull();
 		expect(ethanol.fillUpCount).toBe(0);
@@ -101,70 +121,63 @@ describe("computeFuelTypeStats", () => {
 });
 
 describe("computeFuelRecommendation", () => {
-	it("flags insufficient-data when a fuel has fewer than MIN_RELIABLE_INTERVALS intervals", () => {
-		const rows = [
-			row(1, 0, 40, 200, "gasoline", true, "2026-01-01"),
-			row(2, 400, 38, 220, "gasoline", true, "2026-02-01"),
-			row(3, 800, 36, 210, "gasoline", true, "2026-03-01"),
-			// only one ethanol row ever -> zero ethanol intervals
-			row(4, 1200, 35, 180, "ethanol", true, "2026-04-01"),
-		];
+	it("matches the spec's worked example: cost/km, break-even price, and personalized ratio", () => {
+		// From the spec: gasoline 12.79 km/L, ethanol 11.36 km/L, prices 6.49/4.79.
+		const gasoline = fuelTypeStats({ fuelType: "gasoline", avgKmPerL: 12.79, intervalCount: 24 });
+		const ethanol = fuelTypeStats({ fuelType: "ethanol", avgKmPerL: 11.36, intervalCount: 18 });
 
-		const recommendation = computeFuelRecommendation(rows);
+		const recommendation = computeFuelRecommendation(gasoline, ethanol, { gasoline: 6.49, ethanol: 4.79 });
+
+		expect(recommendation.gasolineCostPerKm).toBeCloseTo(0.507, 3);
+		expect(recommendation.ethanolCostPerKm).toBeCloseTo(0.422, 3);
+		expect(recommendation.breakEvenEthanolPricePerLiter).toBeCloseTo(5.76, 2);
+		expect(recommendation.personalizedEthanolRatio).toBeCloseTo(0.888, 3);
+		expect(recommendation.todayPriceRatio).toBeCloseTo(4.79 / 6.49, 5);
+		expect(recommendation.recommended).toBe("ethanol");
+		expect(recommendation.reason).toBe("ethanol-cheaper");
+		expect(recommendation.confidence).toBe("high");
+	});
+
+	it("returns insufficient-data when either fuel has zero full-tank intervals", () => {
+		const gasoline = fuelTypeStats({ fuelType: "gasoline", avgKmPerL: 12, intervalCount: 10 });
+		const ethanol = fuelTypeStats({ fuelType: "ethanol", avgKmPerL: null, intervalCount: 0 });
+
+		const recommendation = computeFuelRecommendation(gasoline, ethanol, { gasoline: 6, ethanol: 4 });
 
 		expect(recommendation.recommended).toBeNull();
 		expect(recommendation.reason).toBe("insufficient-data");
+		expect(recommendation.confidence).toBeNull();
+		expect(recommendation.gasolineCostPerKm).toBeNull();
 	});
 
-	it("recommends the fuel with the lower forward-looking cost per km", () => {
-		// One continuous odometer sequence: gasoline block (0-1000km) then ethanol
-		// block (1500-2500km), same shape as the "tie" test below but with ethanol
-		// priced much cheaper this time.
-		// Gasoline: distance 1500km / liters 109L, latest price 190/38 = 5.00/L
-		//   -> cost/km = 5.00/(1500/109) ~= 0.3633
-		// Ethanol: distance 1000km / liters 67L, latest price 99/33 = 3.00/L
-		//   -> cost/km = 3.00/(1000/67) ~= 0.2010 (clearly cheaper)
-		const rows = [
-			row(1, 0, 40, 200, "gasoline", true, "2026-01-01"),
-			row(2, 500, 35, 175, "gasoline", true, "2026-01-10"),
-			row(3, 1000, 38, 190, "gasoline", true, "2026-01-20"),
-			row(4, 1500, 36, 108, "ethanol", true, "2026-01-25"),
-			row(5, 2000, 34, 102, "ethanol", true, "2026-02-01"),
-			row(6, 2500, 33, 99, "ethanol", true, "2026-02-10"),
-		];
+	it("classifies confidence off the lower of the two fuels' interval counts", () => {
+		const make = (fuelType: FuelType, intervalCount: number) => fuelTypeStats({ fuelType, avgKmPerL: 10, intervalCount });
+		const prices = { gasoline: 5, ethanol: 5 };
 
-		const recommendation = computeFuelRecommendation(rows);
+		expect(computeFuelRecommendation(make("gasoline", 3), make("ethanol", 20), prices).confidence).toBe("low");
+		expect(computeFuelRecommendation(make("gasoline", 8), make("ethanol", 20), prices).confidence).toBe("medium");
+		expect(computeFuelRecommendation(make("gasoline", 20), make("ethanol", 16), prices).confidence).toBe("high");
+	});
 
-		expect(recommendation.gasoline.avgCostPerKm).toBeCloseTo(0.3633, 3);
-		expect(recommendation.ethanol.avgCostPerKm).toBeCloseTo(0.201, 3);
-		expect(recommendation.recommended).toBe("ethanol");
-		expect(recommendation.reason).toBe("ethanol-cheaper");
+	it("recommends gasoline when it has the lower cost/km", () => {
+		const gasoline = fuelTypeStats({ fuelType: "gasoline", avgKmPerL: 12, intervalCount: 10 });
+		const ethanol = fuelTypeStats({ fuelType: "ethanol", avgKmPerL: 8, intervalCount: 10 });
+
+		// gasoline cost/km = 5/12 ~= 0.417, ethanol cost/km = 5/8 = 0.625 -> gasoline cheaper
+		const recommendation = computeFuelRecommendation(gasoline, ethanol, { gasoline: 5, ethanol: 5 });
+
+		expect(recommendation.recommended).toBe("gasoline");
+		expect(recommendation.reason).toBe("gasoline-cheaper");
 		expect(recommendation.deltaPercent).toBeGreaterThan(0);
 	});
 
 	it("reports a tie when both fuels' cost/km is within the tie threshold", () => {
-		// One continuous odometer sequence (as a real vehicle's history must be): a
-		// gasoline block (0-1000km) followed by an ethanol block (1500-2500km). The
-		// 1000-1500km interval crosses fuels (opened by gasoline's last full tank,
-		// closed by ethanol's first) and is correctly attributed to gasoline.
-		// Gasoline: distance 1500km / liters 109L, latest price 190/38 = 5.00/L
-		//   -> cost/km = 5.00/(1500/109) = 545/1500 = 0.363333...
-		// Ethanol: distance 1000km / liters 67L, latest price (11990/67)/33 = 5.4229/L
-		//   -> cost/km = (11990/2211)/(1000/67) = 11990/33000 = 0.363333... (exact match by construction)
-		const rows = [
-			row(1, 0, 40, 200, "gasoline", true, "2026-01-01"),
-			row(2, 500, 35, 175, "gasoline", true, "2026-01-10"),
-			row(3, 1000, 38, 190, "gasoline", true, "2026-01-20"),
-			row(4, 1500, 36, 180, "ethanol", true, "2026-01-25"),
-			row(5, 2000, 34, 170, "ethanol", true, "2026-02-01"),
-			row(6, 2500, 33, 11990 / 67, "ethanol", true, "2026-02-10"),
-		];
+		const gasoline = fuelTypeStats({ fuelType: "gasoline", avgKmPerL: 10, intervalCount: 10 });
+		const ethanol = fuelTypeStats({ fuelType: "ethanol", avgKmPerL: 7, intervalCount: 10 });
 
-		const recommendation = computeFuelRecommendation(rows);
+		// gasoline cost/km = 10/10 = 1.0, ethanol cost/km = 7/7 = 1.0 -> exact match by construction
+		const recommendation = computeFuelRecommendation(gasoline, ethanol, { gasoline: 10, ethanol: 7 });
 
-		expect(recommendation.gasoline.intervalCount).toBeGreaterThanOrEqual(2);
-		expect(recommendation.ethanol.intervalCount).toBeGreaterThanOrEqual(2);
-		expect(recommendation.gasoline.avgCostPerKm).toBeCloseTo(recommendation.ethanol.avgCostPerKm!, 5);
 		expect(recommendation.recommended).toBeNull();
 		expect(recommendation.reason).toBe("tie");
 		expect(recommendation.deltaPercent).toBe(0);

@@ -1,7 +1,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FUEL_TYPES, type FuelType } from "@/db/schema";
 import { formatCurrency, formatNumber } from "@/lib/format";
-import { MIN_RELIABLE_INTERVALS } from "@/services/fuel-comparison";
+import { CONFIDENCE_THRESHOLDS } from "@/services/fuel-comparison";
 import type { FuelStatistics } from "../queries/get-statistics";
 
 const FUEL_LABELS: Record<FuelType, string> = { gasoline: "Gasoline", ethanol: "Ethanol" };
@@ -71,7 +71,7 @@ export function FuelComparisonTable({ perFuel }: { perFuel: Record<FuelType, Fue
 					</TableBody>
 				</Table>
 			</div>
-			{FUEL_TYPES.filter((fuelType) => perFuel[fuelType].intervalCount < MIN_RELIABLE_INTERVALS).map((fuelType) => (
+			{FUEL_TYPES.filter((fuelType) => perFuel[fuelType].intervalCount < CONFIDENCE_THRESHOLDS.low).map((fuelType) => (
 				<p key={fuelType} className="mt-2 text-xs text-muted-foreground">
 					{FUEL_LABELS[fuelType]} is based on only {perFuel[fuelType].intervalCount} recorded full-tank interval
 					{perFuel[fuelType].intervalCount === 1 ? "" : "s"} — numbers may be unreliable.

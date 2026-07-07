@@ -1,53 +1,137 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { formatCurrency, formatNumber } from "@/lib/format";
-import { MIN_RELIABLE_INTERVALS, type FuelRecommendation as FuelRecommendationData } from "@/services/fuel-comparison";
+"use client";
 
-const FUEL_LABELS = { gasoline: "Gasoline", ethanol: "Ethanol" } as const;
+import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { FuelType } from "@/db/schema";
+import { formatCurrency, formatDateDisplay } from "@/lib/format";
+import { computeFuelRecommendation, type FuelConfidence, type FuelTypeStats } from "@/services/fuel-comparison";
+import { FuelRecommendationScience } from "./fuel-recommendation-science";
 
-function FuelColumn({ label, stats }: { label: string; stats: FuelRecommendationData["gasoline"] }) {
-	return (
-		<div className="flex flex-col gap-1 rounded-lg border p-3">
-			<p className="text-sm font-medium">{label}</p>
-			<dl className="flex flex-col gap-0.5 text-xs text-muted-foreground">
-				<div className="flex justify-between gap-2">
-					<dt>Latest price/L</dt>
-					<dd>{stats.latestPricePerLiter !== null ? formatCurrency(stats.latestPricePerLiter) : "—"}</dd>
-				</div>
-				<div className="flex justify-between gap-2">
-					<dt>Avg. km/L</dt>
-					<dd>{stats.avgKmPerL !== null ? formatNumber(stats.avgKmPerL, { maximumFractionDigits: 2 }) : "—"}</dd>
-				</div>
-				<div className="flex justify-between gap-2">
-					<dt>Cost/km</dt>
-					<dd>{stats.avgCostPerKm !== null ? formatCurrency(stats.avgCostPerKm) : "—"}</dd>
-				</div>
-			</dl>
-		</div>
-	);
+const FUEL_LABELS: Record<FuelType, string> = { gasoline: "Gasoline", ethanol: "Ethanol" };
+
+const CONFIDENCE_LABELS: Record<FuelConfidence, string> = {
+	low: "Low confidence",
+	medium: "Medium confidence",
+	high: "High confidence",
+};
+
+type PriceMode = "recorded" | "custom";
+
+function defaultPriceInput(stats: FuelTypeStats): string {
+	return stats.latestPricePerLiter !== null ? stats.latestPricePerLiter.toFixed(2) : "";
 }
 
-export function FuelRecommendation({ recommendation }: { recommendation: FuelRecommendationData }) {
-	const { gasoline, ethanol, recommended, reason, deltaPercent } = recommendation;
+export function FuelRecommendation({ perFuel }: { perFuel: Record<FuelType, FuelTypeStats> }) {
+	const [mode, setMode] = useState<PriceMode>("recorded");
+	const [gasolinePrice, setGasolinePrice] = useState(() => defaultPriceInput(perFuel.gasoline));
+	const [ethanolPrice, setEthanolPrice] = useState(() => defaultPriceInput(perFuel.ethanol));
 
-	let headline: string;
-	if (reason === "insufficient-data") {
-		const short = gasoline.intervalCount < MIN_RELIABLE_INTERVALS ? gasoline : ethanol;
-		headline = `Not enough full-tank history yet to compare fuels reliably. ${FUEL_LABELS[short.fuelType]} has only ${short.intervalCount} recorded interval${short.intervalCount === 1 ? "" : "s"} — log at least ${MIN_RELIABLE_INTERVALS} to see a recommendation.`;
-	} else if (reason === "tie") {
-		headline = "Gasoline and ethanol currently cost about the same per km — no clear winner.";
-	} else {
-		const other = recommended === "gasoline" ? "ethanol" : "gasoline";
-		headline = `${FUEL_LABELS[recommended!]} is currently more worth it — about ${formatNumber(deltaPercent!, { maximumFractionDigits: 1 })}% cheaper per km than ${FUEL_LABELS[other]}.`;
+	const recordedPrices =
+		perFuel.gasoline.latestPricePerLiter !== null && perFuel.ethanol.latestPricePerLiter !== null
+			? { gasoline: perFuel.gasoline.latestPricePerLiter, ethanol: perFuel.ethanol.latestPricePerLiter }
+			: null;
+
+	const gasolinePriceValue = Number.parseFloat(gasolinePrice);
+	const ethanolPriceValue = Number.parseFloat(ethanolPrice);
+	const customPrices =
+		Number.isFinite(gasolinePriceValue) && gasolinePriceValue > 0 && Number.isFinite(ethanolPriceValue) && ethanolPriceValue > 0
+			? { gasoline: gasolinePriceValue, ethanol: ethanolPriceValue }
+			: null;
+
+	const activePrices = mode === "recorded" ? recordedPrices : customPrices;
+	const recommendation = activePrices ? computeFuelRecommendation(perFuel.gasoline, perFuel.ethanol, activePrices) : null;
+
+	function resetCustomPrices() {
+		setGasolinePrice(defaultPriceInput(perFuel.gasoline));
+		setEthanolPrice(defaultPriceInput(perFuel.ethanol));
 	}
 
 	return (
 		<Card>
-			<CardContent className="flex flex-col gap-3 pt-6">
-				<p className="text-sm font-medium">{headline}</p>
-				<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-					<FuelColumn label="Gasoline" stats={gasoline} />
-					<FuelColumn label="Ethanol" stats={ethanol} />
-				</div>
+			<CardHeader>
+				<CardTitle>Fuel recommendation</CardTitle>
+				{recommendation?.confidence && (
+					<CardAction>
+						<Badge variant="secondary">{CONFIDENCE_LABELS[recommendation.confidence]}</Badge>
+					</CardAction>
+				)}
+			</CardHeader>
+			<CardContent className="flex flex-col gap-4">
+				<Tabs value={mode} onValueChange={(value) => setMode(value as PriceMode)}>
+					<TabsList>
+						<TabsTrigger value="recorded">Last recorded</TabsTrigger>
+						<TabsTrigger value="custom">Custom prices</TabsTrigger>
+					</TabsList>
+
+					<TabsContent value="recorded" className="mt-3">
+						{recordedPrices ? (
+							<p className="text-sm text-muted-foreground">
+								Using last recorded prices: {FUEL_LABELS.gasoline} {formatCurrency(recordedPrices.gasoline)}/L
+								{perFuel.gasoline.latestFillUpDate && ` (filled ${formatDateDisplay(perFuel.gasoline.latestFillUpDate)})`}, {FUEL_LABELS.ethanol}{" "}
+								{formatCurrency(recordedPrices.ethanol)}/L
+								{perFuel.ethanol.latestFillUpDate && ` (filled ${formatDateDisplay(perFuel.ethanol.latestFillUpDate)})`}
+							</p>
+						) : (
+							<p className="text-sm text-muted-foreground">No recorded price yet for both fuels.</p>
+						)}
+					</TabsContent>
+
+					<TabsContent value="custom" className="mt-3">
+						<div className="grid grid-cols-2 gap-3">
+							<div className="flex flex-col gap-1.5">
+								<label htmlFor="fuel-rec-gasoline" className="text-sm font-medium">
+									Gasoline (R$/L)
+								</label>
+								<Input
+									id="fuel-rec-gasoline"
+									type="number"
+									inputMode="decimal"
+									step="0.01"
+									min={0}
+									value={gasolinePrice}
+									onChange={(e) => setGasolinePrice(e.target.value)}
+									placeholder="e.g. 6.49"
+								/>
+							</div>
+							<div className="flex flex-col gap-1.5">
+								<label htmlFor="fuel-rec-ethanol" className="text-sm font-medium">
+									Ethanol (R$/L)
+								</label>
+								<Input
+									id="fuel-rec-ethanol"
+									type="number"
+									inputMode="decimal"
+									step="0.01"
+									min={0}
+									value={ethanolPrice}
+									onChange={(e) => setEthanolPrice(e.target.value)}
+									placeholder="e.g. 4.79"
+								/>
+							</div>
+						</div>
+						<Button
+							type="button"
+							variant="ghost"
+							size="sm"
+							className="mt-2 h-auto p-0 font-normal text-muted-foreground hover:bg-transparent hover:underline"
+							onClick={resetCustomPrices}
+						>
+							Reset to last recorded
+						</Button>
+					</TabsContent>
+				</Tabs>
+
+				{recommendation ? (
+					<FuelRecommendationScience recommendation={recommendation} gasoline={perFuel.gasoline} ethanol={perFuel.ethanol} />
+				) : (
+					<p className="text-sm text-muted-foreground">
+						{mode === "recorded" ? "No recorded price yet for both fuels." : "Enter both prices to see a recommendation."}
+					</p>
+				)}
 			</CardContent>
 		</Card>
 	);

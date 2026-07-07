@@ -1,6 +1,6 @@
 import { StatCard } from "@/components/stat-card";
 import { formatCurrency, formatNumber } from "@/lib/format";
-import { MIN_RELIABLE_INTERVALS, type FuelTypeStats } from "@/services/fuel-comparison";
+import { CONFIDENCE_THRESHOLDS, type FuelTypeStats } from "@/services/fuel-comparison";
 
 export function FuelStatsGrid({ stats }: { stats: FuelTypeStats }) {
 	return (
@@ -28,7 +28,7 @@ export function FuelStatsGrid({ stats }: { stats: FuelTypeStats }) {
 					}
 				/>
 			</div>
-			{stats.intervalCount < MIN_RELIABLE_INTERVALS && (
+			{stats.intervalCount < CONFIDENCE_THRESHOLDS.low && (
 				<p className="text-xs text-muted-foreground">
 					Based on only {stats.intervalCount} recorded full-tank interval{stats.intervalCount === 1 ? "" : "s"} —
 					numbers may be unreliable.
