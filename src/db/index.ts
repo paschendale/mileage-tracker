@@ -4,7 +4,7 @@ import * as schema from "./schema";
 
 export function getDb() {
 	const { env } = getCloudflareContext();
-	return drizzle(env.DB, { schema });
+	return drizzle(env.mileage_tracker_db, { schema });
 }
 
 export type Db = ReturnType<typeof getDb>;
