@@ -77,5 +77,5 @@ export async function getFillUpsPage(
 		return dir === "asc" ? odometerCmp : -odometerCmp;
 	});
 
-	return paginate(sorted, options.page ?? 1, options.pageSize ?? 15);
+	return paginate(sorted, options.page ?? 1, options.pageSize ?? 50);
 }

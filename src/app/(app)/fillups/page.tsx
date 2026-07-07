@@ -26,7 +26,7 @@ export default async function FillUpsPage({ searchParams }: FillUpsPageProps) {
 
 	const result = vehicleId
 		? await getFillUpsPage(vehicleId, { query, sort, dir, page })
-		: { items: [], page: 1, pageSize: 15, totalItems: 0, totalPages: 1 };
+		: { items: [], page: 1, pageSize: 50, totalItems: 0, totalPages: 1 };
 
 	return (
 		<div className="p-6 md:p-8">
