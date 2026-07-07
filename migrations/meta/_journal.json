@@ -15,6 +15,13 @@
       "when": 1783388614365,
       "tag": "0001_bent_jetstream",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1783390765062,
+      "tag": "0002_careless_the_call",
+      "breakpoints": true
     }
   ]
 }

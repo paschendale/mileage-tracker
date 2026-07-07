@@ -1,0 +1,1 @@
+ALTER TABLE `vehicles` ADD `tank_capacity_liters` real;

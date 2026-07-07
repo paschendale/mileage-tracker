@@ -13,7 +13,11 @@ export const updateVehicleAction = authActionClient
 		const db = getDb();
 		const [vehicle] = await db
 			.update(vehicles)
-			.set({ name: parsedInput.name, thumbnailUrl: parsedInput.thumbnailUrl || null })
+			.set({
+				name: parsedInput.name,
+				thumbnailUrl: parsedInput.thumbnailUrl || null,
+				tankCapacityLiters: parsedInput.tankCapacityLiters ?? null,
+			})
 			.where(eq(vehicles.id, parsedInput.id))
 			.returning();
 

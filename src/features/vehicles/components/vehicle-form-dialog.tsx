@@ -50,6 +50,11 @@ function VehicleForm({
 }) {
 	const [name, setName] = useState(vehicle?.name ?? "");
 	const [thumbnailUrl, setThumbnailUrl] = useState(vehicle?.thumbnailUrl ?? "");
+	const [tankCapacityLiters, setTankCapacityLiters] = useState(
+		vehicle?.tankCapacityLiters !== null && vehicle?.tankCapacityLiters !== undefined
+			? String(vehicle.tankCapacityLiters)
+			: "",
+	);
 
 	const createAction = useAction(createVehicleAction, {
 		onSuccess: () => {
@@ -75,10 +80,13 @@ function VehicleForm({
 
 	function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
+		const parsedCapacity = Number.parseFloat(tankCapacityLiters);
+		const tankCapacity = tankCapacityLiters.trim() !== "" && Number.isFinite(parsedCapacity) ? parsedCapacity : null;
+
 		if (mode === "create") {
-			createAction.execute({ name, thumbnailUrl });
+			createAction.execute({ name, thumbnailUrl, tankCapacityLiters: tankCapacity });
 		} else if (vehicle) {
-			updateAction.execute({ id: vehicle.id, name, thumbnailUrl });
+			updateAction.execute({ id: vehicle.id, name, thumbnailUrl, tankCapacityLiters: tankCapacity });
 		}
 	}
 
@@ -105,6 +113,21 @@ function VehicleForm({
 					value={thumbnailUrl}
 					onChange={(e) => setThumbnailUrl(e.target.value)}
 					placeholder="https://…"
+				/>
+			</div>
+			<div className="flex flex-col gap-1.5">
+				<label htmlFor="vehicle-tank-capacity" className="text-sm font-medium">
+					Tank capacity (L)
+				</label>
+				<Input
+					id="vehicle-tank-capacity"
+					type="number"
+					inputMode="decimal"
+					step="0.1"
+					min={0}
+					value={tankCapacityLiters}
+					onChange={(e) => setTankCapacityLiters(e.target.value)}
+					placeholder="e.g. 50"
 				/>
 			</div>
 			<DialogFooter>

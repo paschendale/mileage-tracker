@@ -8,6 +8,7 @@ const thumbnailUrl = z
 export const vehicleSchema = z.object({
 	name: z.string().trim().min(1, "Name is required").max(100),
 	thumbnailUrl: thumbnailUrl.optional().default(""),
+	tankCapacityLiters: z.number().positive().nullable().optional().default(null),
 });
 
 export const updateVehicleSchema = vehicleSchema.extend({

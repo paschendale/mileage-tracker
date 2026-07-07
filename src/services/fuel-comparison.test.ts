@@ -47,7 +47,23 @@ describe("computeFuelTypeStats", () => {
 		expect(ethanol.intervalCount).toBe(1);
 		expect(ethanol.distanceTraveledKm).toBe(600);
 		expect(ethanol.avgKmPerL).toBeCloseTo(600 / (8 + 30), 5);
-		expect(ethanol.estimatedAutonomyKm).toBeCloseTo(600, 5);
+	});
+
+	it("computes estimated autonomy as tank capacity times measured avg km/L", () => {
+		const rows = [
+			row(1, 0, 40, 200, "ethanol", true, "2026-01-01"),
+			row(2, 200, 8, 45, "ethanol", false, "2026-01-05"),
+			row(3, 600, 30, 160, "ethanol", true, "2026-01-15"),
+		];
+		const avgKmPerL = 600 / (8 + 30);
+
+		const withCapacity = computeFuelTypeStats(rows, "ethanol", 50);
+		expect(withCapacity.estimatedAutonomyKm).toBeCloseTo(50 * avgKmPerL, 5);
+
+		// Without a known tank capacity there's nothing to multiply by, so it's
+		// left null (shown as "—") rather than guessed at.
+		const withoutCapacity = computeFuelTypeStats(rows, "ethanol");
+		expect(withoutCapacity.estimatedAutonomyKm).toBeNull();
 	});
 
 	it("computes historical avgFuelPrice and latestPricePerLiter across all rows of a fuel, interval-agnostic", () => {

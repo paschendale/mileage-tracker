@@ -49,6 +49,7 @@ export function VehicleCard({ vehicle, fillUpCount }: { vehicle: Vehicle; fillUp
 						<p className="font-medium">{vehicle.name}</p>
 						<p className="text-sm text-muted-foreground">
 							{fillUpCount} fill-up{fillUpCount === 1 ? "" : "s"}
+							{vehicle.tankCapacityLiters !== null ? ` · ${vehicle.tankCapacityLiters} L tank` : ""}
 						</p>
 					</div>
 				</CardContent>

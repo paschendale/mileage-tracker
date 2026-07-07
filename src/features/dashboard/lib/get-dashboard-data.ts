@@ -3,30 +3,12 @@ import { FUEL_TYPES } from "@/db/schema";
 import type { WithMetrics } from "@/services/consumption";
 import { computeFuelRecommendation, computeFuelTypeStats, type FuelRecommendation, type FuelTypeStats } from "@/services/fuel-comparison";
 import { getVehicleFillUpsWithMetrics } from "@/services/fillups";
-import {
-	computeAvgCostPerKm,
-	computeAvgFuelPrice,
-	computeAvgKmPerL,
-	computeDaysSinceLastFillUp,
-	computeDistanceTraveled,
-	computeEstimatedAutonomyKm,
-	computeFillUpCount,
-	computeTotalLiters,
-	computeTotalSpent,
-} from "@/services/stats";
+import { computeDaysSinceLastFillUp } from "@/services/stats";
 
 export interface DashboardData {
 	vehicle: Vehicle;
 	fillUps: WithMetrics<FillUp>[];
-	avgKmPerL: number | null;
-	avgFuelPrice: number | null;
-	avgCostPerKm: number | null;
-	totalSpent: number;
-	totalLiters: number;
-	distanceTraveled: number;
-	fillUpCount: number;
 	daysSinceLastFillUp: number | null;
-	estimatedAutonomyKm: number | null;
 	perFuel: Record<FuelType, FuelTypeStats>;
 	recommendation: FuelRecommendation;
 	/** Fuel type of the most recent fill-up — the fuel switcher's default selection. */
@@ -46,23 +28,15 @@ export async function getDashboardData(vehicle: Vehicle): Promise<DashboardData>
 	const fillUps = await getVehicleFillUpsWithMetrics(vehicle.id);
 
 	const perFuel = Object.fromEntries(
-		FUEL_TYPES.map((fuelType) => [fuelType, computeFuelTypeStats(fillUps, fuelType)]),
+		FUEL_TYPES.map((fuelType) => [fuelType, computeFuelTypeStats(fillUps, fuelType, vehicle.tankCapacityLiters)]),
 	) as Record<FuelType, FuelTypeStats>;
 
 	return {
 		vehicle,
 		fillUps,
-		avgKmPerL: computeAvgKmPerL(fillUps),
-		avgFuelPrice: computeAvgFuelPrice(fillUps),
-		avgCostPerKm: computeAvgCostPerKm(fillUps),
-		totalSpent: computeTotalSpent(fillUps),
-		totalLiters: computeTotalLiters(fillUps),
-		distanceTraveled: computeDistanceTraveled(fillUps),
-		fillUpCount: computeFillUpCount(fillUps),
 		daysSinceLastFillUp: computeDaysSinceLastFillUp(fillUps),
-		estimatedAutonomyKm: computeEstimatedAutonomyKm(fillUps),
 		perFuel,
-		recommendation: computeFuelRecommendation(fillUps),
+		recommendation: computeFuelRecommendation(fillUps, vehicle.tankCapacityLiters),
 		lastFillUpFuelType: findLastFillUpFuelType(fillUps),
 	};
 }

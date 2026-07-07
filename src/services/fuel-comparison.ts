@@ -10,7 +10,7 @@ export interface FuelTypeStats {
 	fuelType: FuelType;
 	/** Weighted avg km/L over full-tank intervals OPENED by this fuel. */
 	avgKmPerL: number | null;
-	/** Mean distance covered by intervals opened by this fuel — "how far a full tank of this fuel lasts". */
+	/** tankCapacityLiters * avgKmPerL — "how far a full tank of this fuel lasts". Null if capacity is unknown. */
 	estimatedAutonomyKm: number | null;
 	/** Total distance covered by intervals opened by this fuel. */
 	distanceTraveledKm: number;
@@ -35,14 +35,21 @@ export interface FuelTypeStats {
  * row's own fuelType before reusing full-tank-interval math would misattribute
  * distance/consumption to the wrong fuel; intervals must be grouped by `open.fuelType`.
  */
-export function computeFuelTypeStats(rows: readonly FuelComparisonFillUp[], fuelType: FuelType): FuelTypeStats {
+export function computeFuelTypeStats(
+	rows: readonly FuelComparisonFillUp[],
+	fuelType: FuelType,
+	tankCapacityLiters?: number | null,
+): FuelTypeStats {
 	const sorted = sortByOdometer(rows);
 	const intervals = findFullTankIntervals(sorted).filter((interval) => interval.open.fuelType === fuelType);
 
 	const distanceTraveledKm = intervals.reduce((sum, interval) => sum + interval.distanceKm, 0);
 	const litersSum = intervals.reduce((sum, interval) => sum + interval.litersSum, 0);
 	const avgKmPerL = litersSum > 0 ? distanceTraveledKm / litersSum : null;
-	const estimatedAutonomyKm = intervals.length > 0 ? distanceTraveledKm / intervals.length : null;
+	const estimatedAutonomyKm =
+		tankCapacityLiters !== null && tankCapacityLiters !== undefined && avgKmPerL !== null
+			? tankCapacityLiters * avgKmPerL
+			: null;
 
 	const fuelRows = rows.filter((r) => r.fuelType === fuelType);
 	const totalSpent = fuelRows.reduce((sum, r) => sum + r.totalPrice, 0);
@@ -93,9 +100,12 @@ function isReliable(stats: FuelTypeStats): boolean {
 	return stats.intervalCount >= MIN_RELIABLE_INTERVALS && stats.avgCostPerKm !== null;
 }
 
-export function computeFuelRecommendation(rows: readonly FuelComparisonFillUp[]): FuelRecommendation {
-	const gasoline = computeFuelTypeStats(rows, "gasoline");
-	const ethanol = computeFuelTypeStats(rows, "ethanol");
+export function computeFuelRecommendation(
+	rows: readonly FuelComparisonFillUp[],
+	tankCapacityLiters?: number | null,
+): FuelRecommendation {
+	const gasoline = computeFuelTypeStats(rows, "gasoline", tankCapacityLiters);
+	const ethanol = computeFuelTypeStats(rows, "ethanol", tankCapacityLiters);
 
 	if (!isReliable(gasoline) || !isReliable(ethanol)) {
 		return { recommended: null, reason: "insufficient-data", gasoline, ethanol, deltaPercent: null };

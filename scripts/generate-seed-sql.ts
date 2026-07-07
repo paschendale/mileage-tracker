@@ -15,6 +15,7 @@ interface SourceFillUp {
 }
 
 const SEED_VEHICLE_NAME = "HRV";
+const SEED_VEHICLE_TANK_CAPACITY_LITERS = 50;
 
 // data.json uses "alcohol"; the app's fuelType enum uses "ethanol".
 const FUEL_TYPE_MAP: Record<string, string> = {
@@ -34,7 +35,7 @@ function main() {
 	const statements: string[] = [];
 
 	statements.push(
-		`INSERT INTO vehicles (name, thumbnail_url)\nSELECT ${sqlString(SEED_VEHICLE_NAME)}, NULL\nWHERE NOT EXISTS (SELECT 1 FROM vehicles WHERE name = ${sqlString(SEED_VEHICLE_NAME)});`,
+		`INSERT INTO vehicles (name, thumbnail_url, tank_capacity_liters)\nSELECT ${sqlString(SEED_VEHICLE_NAME)}, NULL, ${SEED_VEHICLE_TANK_CAPACITY_LITERS}\nWHERE NOT EXISTS (SELECT 1 FROM vehicles WHERE name = ${sqlString(SEED_VEHICLE_NAME)});`,
 	);
 
 	for (const entry of entries) {

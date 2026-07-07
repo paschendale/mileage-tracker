@@ -10,7 +10,11 @@ export const createVehicleAction = authActionClient.inputSchema(vehicleSchema).a
 	const db = getDb();
 	const [vehicle] = await db
 		.insert(vehicles)
-		.values({ name: parsedInput.name, thumbnailUrl: parsedInput.thumbnailUrl || null })
+		.values({
+			name: parsedInput.name,
+			thumbnailUrl: parsedInput.thumbnailUrl || null,
+			tankCapacityLiters: parsedInput.tankCapacityLiters ?? null,
+		})
 		.returning();
 
 	revalidatePath("/vehicles");
