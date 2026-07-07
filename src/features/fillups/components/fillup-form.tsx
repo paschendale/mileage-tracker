@@ -22,9 +22,6 @@ import { updateFillUpAction } from "../actions/update-fillup";
 const FUEL_TYPE_LABELS: Record<FuelType, string> = {
 	gasoline: "Gasoline",
 	ethanol: "Ethanol",
-	diesel: "Diesel",
-	flex: "Flex",
-	cng: "CNG",
 };
 
 interface FillUpFormProps {

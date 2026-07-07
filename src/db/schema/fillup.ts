@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 import { check, index, integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { vehicles } from "./vehicle";
 
-export const FUEL_TYPES = ["gasoline", "ethanol", "diesel", "flex", "cng"] as const;
+export const FUEL_TYPES = ["gasoline", "ethanol"] as const;
 export type FuelType = (typeof FUEL_TYPES)[number];
 
 export const fillUps = sqliteTable(
@@ -32,7 +32,7 @@ export const fillUps = sqliteTable(
 		index("fill_ups_odometer_km_idx").on(table.odometerKm),
 		// The actual hot access pattern is "all fill-ups for vehicle X ordered by odometer".
 		index("fill_ups_vehicle_odometer_idx").on(table.vehicleId, table.odometerKm),
-		check("fill_ups_fuel_type_check", sql`${table.fuelType} in ('gasoline','ethanol','diesel','flex','cng')`),
+		check("fill_ups_fuel_type_check", sql`${table.fuelType} in ('gasoline','ethanol')`),
 	],
 );
 
