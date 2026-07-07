@@ -1,4 +1,5 @@
-import { TriangleAlertIcon } from "lucide-react";
+import { Fuel, TriangleAlertIcon } from "lucide-react";
+import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -45,10 +46,11 @@ interface FillUpsTableProps {
 export function FillUpsTable({ rows, sort, dir, searchParams }: FillUpsTableProps) {
 	if (rows.length === 0) {
 		return (
-			<div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed py-24 text-center">
-				<p className="font-medium">No fill-ups found</p>
-				<p className="text-sm text-muted-foreground">Try a different search, or add your first fill-up.</p>
-			</div>
+			<EmptyState
+				icon={Fuel}
+				title="No fill-ups found"
+				description="Try a different search, or add your first fill-up."
+			/>
 		);
 	}
 
@@ -93,12 +95,12 @@ export function FillUpsTable({ rows, sort, dir, searchParams }: FillUpsTableProp
 										"bg-amber-500/10 hover:bg-amber-500/15 dark:bg-amber-500/15 dark:hover:bg-amber-500/20",
 								)}
 							>
-								<TableCell className="whitespace-nowrap">{formatDateDisplay(row.date)}</TableCell>
-								<TableCell className="whitespace-nowrap">{formatNumber(row.odometerKm)} km</TableCell>
+								<TableCell className="whitespace-nowrap tabular-nums">{formatDateDisplay(row.date)}</TableCell>
+								<TableCell className="whitespace-nowrap tabular-nums">{formatNumber(row.odometerKm)} km</TableCell>
 								<TableCell className="capitalize">{row.fuelType}</TableCell>
-								<TableCell>{formatNumber(row.liters, { maximumFractionDigits: 2 })} L</TableCell>
-								<TableCell className="whitespace-nowrap">{formatCurrency(row.totalPrice)}</TableCell>
-								<TableCell className="whitespace-nowrap">
+								<TableCell className="tabular-nums">{formatNumber(row.liters, { maximumFractionDigits: 2 })} L</TableCell>
+								<TableCell className="whitespace-nowrap tabular-nums">{formatCurrency(row.totalPrice)}</TableCell>
+								<TableCell className="whitespace-nowrap tabular-nums">
 									<span className="inline-flex items-center gap-1.5">
 										{formatCurrency(row.pricePerLiter)}
 										{row.outliers.pricePerLiter && (
@@ -113,7 +115,7 @@ export function FillUpsTable({ rows, sort, dir, searchParams }: FillUpsTableProp
 										<Badge variant="outline">Partial</Badge>
 									)}
 								</TableCell>
-								<TableCell className="whitespace-nowrap">
+								<TableCell className="whitespace-nowrap tabular-nums">
 									<span className="inline-flex items-center gap-1.5">
 										{row.consumptionKmPerL !== null
 											? `${formatNumber(row.consumptionKmPerL, { maximumFractionDigits: 2 })} km/L`

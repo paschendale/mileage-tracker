@@ -33,7 +33,7 @@ export function FuelPriceChart({ points }: { points: FuelPricePoint[] }) {
 					<Line
 						type="monotone"
 						dataKey="pricePerLiter"
-						stroke="var(--chart-3)"
+						stroke="var(--chart-1)"
 						strokeWidth={2}
 						dot={false}
 						animationDuration={400}

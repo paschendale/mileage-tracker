@@ -1,3 +1,5 @@
+import { Car } from "lucide-react";
+import { EmptyState } from "@/components/empty-state";
 import { getVehicles } from "@/db/queries/vehicles";
 import { getFillUpCountsByVehicle } from "@/db/queries/fillups";
 import { AddVehicleButton } from "@/features/vehicles/components/add-vehicle-button";
@@ -14,10 +16,11 @@ export default async function VehiclesPage() {
 			</div>
 
 			{vehicles.length === 0 ? (
-				<div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed py-24 text-center">
-					<p className="font-medium">No vehicles yet</p>
-					<p className="text-sm text-muted-foreground">Add a vehicle to start tracking fill-ups.</p>
-				</div>
+				<EmptyState
+					icon={Car}
+					title="No vehicles yet"
+					description="Add a vehicle to start tracking fill-ups."
+				/>
 			) : (
 				<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
 					{vehicles.map((vehicle) => (

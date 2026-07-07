@@ -1,3 +1,5 @@
+import { Car } from "lucide-react";
+import { EmptyState } from "@/components/empty-state";
 import { StatCard } from "@/components/stat-card";
 import { ChartsSection } from "@/features/dashboard/components/charts-section";
 import { FuelRecommendation } from "@/features/dashboard/components/fuel-recommendation";
@@ -13,10 +15,11 @@ export default async function DashboardPage() {
 	if (!selectedVehicle) {
 		return (
 			<div className="p-6 md:p-8">
-				<div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed py-24 text-center">
-					<p className="font-medium">No vehicles yet</p>
-					<p className="text-sm text-muted-foreground">Add a vehicle to start seeing your dashboard.</p>
-				</div>
+				<EmptyState
+					icon={Car}
+					title="No vehicles yet"
+					description="Add a vehicle to start seeing your dashboard."
+				/>
 			</div>
 		);
 	}

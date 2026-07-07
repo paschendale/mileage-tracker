@@ -21,7 +21,7 @@ export function VehicleCard({ vehicle, fillUpCount }: { vehicle: Vehicle; fillUp
 
 	return (
 		<>
-			<Card className="group relative overflow-hidden transition-shadow hover:shadow-md">
+			<Card className="group relative overflow-hidden transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md">
 				<DropdownMenu>
 					<DropdownMenuTrigger
 						render={

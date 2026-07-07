@@ -1,5 +1,6 @@
-import { Plus } from "lucide-react";
+import { Car, Plus } from "lucide-react";
 import Link from "next/link";
+import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { FillUpsSearch } from "@/features/fillups/components/fillups-search";
 import { FillUpsTable } from "@/features/fillups/components/fillups-table";
@@ -47,10 +48,11 @@ export default async function FillUpsPage({ searchParams }: FillUpsPageProps) {
 			</div>
 
 			{vehicleId === null ? (
-				<div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed py-24 text-center">
-					<p className="font-medium">No vehicles yet</p>
-					<p className="text-sm text-muted-foreground">Add a vehicle before logging fill-ups.</p>
-				</div>
+				<EmptyState
+					icon={Car}
+					title="No vehicles yet"
+					description="Add a vehicle before logging fill-ups."
+				/>
 			) : (
 				<>
 					<FillUpsTable rows={result.items} sort={sort} dir={dir} searchParams={params} />

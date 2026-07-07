@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
-import { Inconsolata } from "next/font/google";
+import { Open_Sans } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 
-const inconsolata = Inconsolata({
-	variable: "--font-inconsolata",
+const openSans = Open_Sans({
+	variable: "--font-open-sans",
 	subsets: ["latin"],
+	weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -21,11 +22,11 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang="en" suppressHydrationWarning>
+		<html lang="en" className={openSans.variable} suppressHydrationWarning>
 			<head>
 				<link rel="icon" href="/favicon.svg" type="image/svg+xml"></link>
 			</head>
-			<body className={`${inconsolata.variable} antialiased`}>
+			<body className="antialiased">
 				<ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
 					<TooltipProvider>
 						{children}

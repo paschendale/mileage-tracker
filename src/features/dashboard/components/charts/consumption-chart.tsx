@@ -33,7 +33,7 @@ export function ConsumptionChart({ points }: { points: ConsumptionPoint[] }) {
 					<Line
 						type="monotone"
 						dataKey="consumptionKmPerL"
-						stroke="var(--chart-2)"
+						stroke="var(--chart-1)"
 						strokeWidth={2}
 						dot={false}
 						animationDuration={400}

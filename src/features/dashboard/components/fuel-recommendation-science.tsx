@@ -33,12 +33,12 @@ function CostBar({ label, value, maxValue, isWinner }: { label: string; value: n
 	return (
 		<div className="flex items-center gap-3">
 			<div className="flex w-20 shrink-0 items-center gap-1">
-				{isWinner && <Check className="size-3.5 shrink-0" />}
-				<span className={cn("truncate text-sm", isWinner ? "font-medium text-foreground" : "text-muted-foreground")}>{label}</span>
+				{isWinner && <Check className="size-3.5 shrink-0 text-primary" />}
+				<span className={cn("truncate text-sm", isWinner ? "font-medium text-primary" : "text-muted-foreground")}>{label}</span>
 			</div>
 			<div className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-muted">
 				<div
-					className={cn("h-full rounded-full transition-all duration-500 ease-out", isWinner ? "bg-foreground" : "bg-muted-foreground/40")}
+					className={cn("h-full rounded-full transition-all duration-500 ease-out", isWinner ? "bg-primary" : "bg-muted-foreground/40")}
 					style={{ width: `${widthPercent}%` }}
 				/>
 			</div>
@@ -66,7 +66,7 @@ function BreakEvenMeter({ todayPrice, breakEvenPrice }: { todayPrice: number; br
 				<div
 					className={cn(
 						"absolute top-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-background transition-all duration-500 ease-out",
-						belowBreakEven ? "bg-foreground" : "bg-muted-foreground",
+						belowBreakEven ? "bg-primary" : "bg-muted-foreground",
 					)}
 					style={{ left: `${todayPercent}%` }}
 				/>
@@ -102,7 +102,7 @@ function RatioMeter({ todayRatioPercent, personalizedRatioPercent }: { todayRati
 				<div
 					className={cn(
 						"absolute top-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-background transition-all duration-500 ease-out",
-						worthIt ? "bg-foreground" : "bg-muted-foreground",
+						worthIt ? "bg-primary" : "bg-muted-foreground",
 					)}
 					style={{ left: `${clampedTodayPercent}%` }}
 				/>
@@ -167,7 +167,7 @@ export function FuelRecommendationScience({
 							</button>
 						}
 					/>
-					<PopoverContent className="whitespace-pre-line font-mono text-xs">{FORMULA_EXPLANATION}</PopoverContent>
+					<PopoverContent className="whitespace-pre-line text-xs">{FORMULA_EXPLANATION}</PopoverContent>
 				</Popover>
 			</div>
 

@@ -20,7 +20,7 @@ export function MonthlyLitersChart({ data }: { data: MonthlyAggregate[] }) {
 						itemStyle={chartTooltipItemStyle}
 						formatter={(value) => [`${formatNumber(Number(value), { maximumFractionDigits: 1 })} L`, "Liters"]}
 					/>
-					<Bar dataKey="totalLiters" fill="var(--chart-4)" radius={[4, 4, 0, 0]} animationDuration={400} />
+					<Bar dataKey="totalLiters" fill="var(--chart-1)" radius={[4, 4, 0, 0]} animationDuration={400} />
 				</BarChart>
 			</ResponsiveContainer>
 		</ChartCard>

@@ -20,4 +20,5 @@ export const chartTooltipLabelStyle: CSSProperties = {
 
 export const chartTooltipItemStyle: CSSProperties = {
 	color: "var(--popover-foreground)",
+	fontVariantNumeric: "tabular-nums",
 };

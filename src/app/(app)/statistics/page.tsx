@@ -1,3 +1,5 @@
+import { Car } from "lucide-react";
+import { EmptyState } from "@/components/empty-state";
 import { FuelComparisonTable } from "@/features/statistics/components/fuel-comparison-table";
 import { SpendingBreakdownTables } from "@/features/statistics/components/spending-breakdown-tables";
 import { StatisticsChartsSection } from "@/features/statistics/components/statistics-charts-section";
@@ -11,10 +13,7 @@ export default async function StatisticsPage() {
 	if (!selectedVehicle) {
 		return (
 			<div className="p-6 md:p-8">
-				<div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed py-24 text-center">
-					<p className="font-medium">No vehicles yet</p>
-					<p className="text-sm text-muted-foreground">Add a vehicle to see its statistics.</p>
-				</div>
+				<EmptyState icon={Car} title="No vehicles yet" description="Add a vehicle to see its statistics." />
 			</div>
 		);
 	}

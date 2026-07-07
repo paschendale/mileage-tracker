@@ -26,7 +26,7 @@ export function PriceTrendChart({ data }: { data: MonthlyFuelPricePoint[] }) {
 						type="monotone"
 						dataKey="gasoline"
 						name="Gasoline"
-						stroke="var(--chart-1)"
+						stroke="var(--chart-3)"
 						strokeWidth={2}
 						dot={false}
 						animationDuration={400}
@@ -35,7 +35,7 @@ export function PriceTrendChart({ data }: { data: MonthlyFuelPricePoint[] }) {
 						type="monotone"
 						dataKey="ethanol"
 						name="Ethanol"
-						stroke="var(--chart-3)"
+						stroke="var(--chart-5)"
 						strokeWidth={2}
 						dot={false}
 						animationDuration={400}
