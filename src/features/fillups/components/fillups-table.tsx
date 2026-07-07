@@ -1,9 +1,39 @@
+import { TriangleAlertIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatCurrency, formatDateDisplay, formatNumber } from "@/lib/format";
+import { cn } from "@/lib/utils";
+import type { FieldOutlier } from "@/services/outliers";
 import type { FillUpRow, SortableField, SortDirection } from "../queries/get-fillups";
 import { FillUpRowActions } from "./fillup-row-actions";
 import { SortableColumnHeader } from "./sortable-column-header";
+
+function outlierTooltip(outlier: FieldOutlier, fuelType: string): string {
+	const direction = outlier.percentDeviation >= 0 ? "above" : "below";
+	const percent = formatNumber(Math.abs(outlier.percentDeviation), { maximumFractionDigits: 0 });
+	const label = outlier.field === "pricePerLiter" ? "Price/L" : "Consumption";
+	const value =
+		outlier.field === "pricePerLiter"
+			? formatCurrency(outlier.value)
+			: `${formatNumber(outlier.value, { maximumFractionDigits: 2 })} km/L`;
+	const avg =
+		outlier.field === "pricePerLiter"
+			? formatCurrency(outlier.mean)
+			: `${formatNumber(outlier.mean, { maximumFractionDigits: 2 })} km/L`;
+	return `${label} is ${percent}% ${direction} your typical ${fuelType} value (${value} vs your average ${avg})`;
+}
+
+function OutlierWarning({ outlier, fuelType }: { outlier: FieldOutlier; fuelType: string }) {
+	return (
+		<Tooltip>
+			<TooltipTrigger className="inline-flex align-middle">
+				<TriangleAlertIcon className="size-3.5 text-amber-500" />
+			</TooltipTrigger>
+			<TooltipContent>{outlierTooltip(outlier, fuelType)}</TooltipContent>
+		</Tooltip>
+	);
+}
 
 interface FillUpsTableProps {
 	rows: FillUpRow[];
@@ -53,31 +83,52 @@ export function FillUpsTable({ rows, sort, dir, searchParams }: FillUpsTableProp
 					</TableRow>
 				</TableHeader>
 				<TableBody>
-					{rows.map((row) => (
-						<TableRow key={row.id}>
-							<TableCell className="whitespace-nowrap">{formatDateDisplay(row.date)}</TableCell>
-							<TableCell className="whitespace-nowrap">{formatNumber(row.odometerKm)} km</TableCell>
-							<TableCell className="capitalize">{row.fuelType}</TableCell>
-							<TableCell>{formatNumber(row.liters, { maximumFractionDigits: 2 })} L</TableCell>
-							<TableCell className="whitespace-nowrap">{formatCurrency(row.totalPrice)}</TableCell>
-							<TableCell className="whitespace-nowrap">{formatCurrency(row.pricePerLiter)}</TableCell>
-							<TableCell>
-								{row.isFullTank ? (
-									<Badge variant="secondary">Full</Badge>
-								) : (
-									<Badge variant="outline">Partial</Badge>
+					{rows.map((row) => {
+						const hasOutlier = Object.keys(row.outliers).length > 0;
+						return (
+							<TableRow
+								key={row.id}
+								className={cn(
+									hasOutlier &&
+										"bg-amber-500/10 hover:bg-amber-500/15 dark:bg-amber-500/15 dark:hover:bg-amber-500/20",
 								)}
-							</TableCell>
-							<TableCell className="whitespace-nowrap">
-								{row.consumptionKmPerL !== null
-									? `${formatNumber(row.consumptionKmPerL, { maximumFractionDigits: 2 })} km/L`
-									: "—"}
-							</TableCell>
-							<TableCell>
-								<FillUpRowActions fillUpId={row.id} />
-							</TableCell>
-						</TableRow>
-					))}
+							>
+								<TableCell className="whitespace-nowrap">{formatDateDisplay(row.date)}</TableCell>
+								<TableCell className="whitespace-nowrap">{formatNumber(row.odometerKm)} km</TableCell>
+								<TableCell className="capitalize">{row.fuelType}</TableCell>
+								<TableCell>{formatNumber(row.liters, { maximumFractionDigits: 2 })} L</TableCell>
+								<TableCell className="whitespace-nowrap">{formatCurrency(row.totalPrice)}</TableCell>
+								<TableCell className="whitespace-nowrap">
+									<span className="inline-flex items-center gap-1.5">
+										{formatCurrency(row.pricePerLiter)}
+										{row.outliers.pricePerLiter && (
+											<OutlierWarning outlier={row.outliers.pricePerLiter} fuelType={row.fuelType} />
+										)}
+									</span>
+								</TableCell>
+								<TableCell>
+									{row.isFullTank ? (
+										<Badge variant="secondary">Full</Badge>
+									) : (
+										<Badge variant="outline">Partial</Badge>
+									)}
+								</TableCell>
+								<TableCell className="whitespace-nowrap">
+									<span className="inline-flex items-center gap-1.5">
+										{row.consumptionKmPerL !== null
+											? `${formatNumber(row.consumptionKmPerL, { maximumFractionDigits: 2 })} km/L`
+											: "—"}
+										{row.outliers.consumptionKmPerL && (
+											<OutlierWarning outlier={row.outliers.consumptionKmPerL} fuelType={row.fuelType} />
+										)}
+									</span>
+								</TableCell>
+								<TableCell>
+									<FillUpRowActions fillUpId={row.id} />
+								</TableCell>
+							</TableRow>
+						);
+					})}
 				</TableBody>
 			</Table>
 		</div>

@@ -1,13 +1,14 @@
 import type { FillUp } from "@/db/schema";
 import { getVehicleFillUpsWithMetrics } from "@/services/fillups";
 import type { WithMetrics } from "@/services/consumption";
+import { detectOutliers, type OutlierFlags } from "@/services/outliers";
 import { paginate, type PaginatedResult } from "@/utils/pagination";
 
 export const SORTABLE_FIELDS = ["date", "odometerKm", "liters", "totalPrice", "pricePerLiter", "consumptionKmPerL"] as const;
 export type SortableField = (typeof SORTABLE_FIELDS)[number];
 export type SortDirection = "asc" | "desc";
 
-export type FillUpRow = WithMetrics<FillUp> & { pricePerLiter: number };
+export type FillUpRow = WithMetrics<FillUp> & { pricePerLiter: number; outliers: OutlierFlags };
 
 export interface GetFillUpsPageOptions {
 	query?: string;
@@ -39,20 +40,28 @@ export async function getFillUpsPage(
 	options: GetFillUpsPageOptions = {},
 ): Promise<PaginatedResult<FillUpRow>> {
 	const rows = await getVehicleFillUpsWithMetrics(vehicleId);
-	const withPricePerLiter: FillUpRow[] = rows.map((row) => ({
+	const withPricePerLiter = rows.map((row) => ({
 		...row,
 		pricePerLiter: row.liters > 0 ? row.totalPrice / row.liters : 0,
 	}));
 
+	// Computed on the full vehicle history, before search/sort/pagination, so
+	// flags reflect the whole history rather than shifting with the active page.
+	const outlierMap = detectOutliers(withPricePerLiter);
+	const withOutliers: FillUpRow[] = withPricePerLiter.map((row) => ({
+		...row,
+		outliers: outlierMap.get(row.id) ?? {},
+	}));
+
 	const query = options.query?.trim().toLowerCase();
 	const filtered = query
-		? withPricePerLiter.filter(
+		? withOutliers.filter(
 				(row) =>
 					row.date.includes(query) ||
 					row.fuelType.toLowerCase().includes(query) ||
 					(row.notes ?? "").toLowerCase().includes(query),
 			)
-		: withPricePerLiter;
+		: withOutliers;
 
 	const sort = options.sort ?? "date";
 	const dir = options.dir ?? "desc";
