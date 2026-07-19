@@ -1,4 +1,8 @@
-# Gotchas (found the hard way — verified with Playwright, not just typecheck)
+# Gotchas (found the hard way — don't just typecheck)
+
+## Never run Playwright (or any headless-browser automation) in this repo
+
+Don't install, invoke, or script against Playwright/chromium-cli/similar to "verify" changes here — the user has explicitly asked for this not to happen. If a change needs browser verification, ask the user to check it themselves, or describe what to click and let them confirm. `npm run lint` and `npx tsc --noEmit` are the available automated checks.
 
 ## shadcn/ui here is built on **Base UI**, not Radix
 

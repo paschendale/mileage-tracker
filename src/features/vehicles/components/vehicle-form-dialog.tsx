@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import type { Vehicle } from "@/db/schema";
+import { sanitizeDecimalInput } from "@/lib/format";
 import { createVehicleAction } from "../actions/create-vehicle";
 import { updateVehicleAction } from "../actions/update-vehicle";
 
@@ -121,12 +122,10 @@ function VehicleForm({
 				</label>
 				<Input
 					id="vehicle-tank-capacity"
-					type="number"
+					type="text"
 					inputMode="decimal"
-					step="0.1"
-					min={0}
 					value={tankCapacityLiters}
-					onChange={(e) => setTankCapacityLiters(e.target.value)}
+					onChange={(e) => setTankCapacityLiters(sanitizeDecimalInput(e.target.value))}
 					placeholder="e.g. 50"
 				/>
 			</div>

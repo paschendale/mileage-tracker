@@ -14,7 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { FUEL_TYPES, type FillUp, type FuelType } from "@/db/schema";
 import type { Vehicle } from "@/db/schema";
-import { dateToIsoString, formatCurrency, formatDateDisplay, isoStringToDate } from "@/lib/format";
+import { dateToIsoString, formatCurrency, formatDateDisplay, isoStringToDate, sanitizeDecimalInput } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { createFillUpAction } from "../actions/create-fillup";
 import { updateFillUpAction } from "../actions/update-fillup";
@@ -184,12 +184,10 @@ export function FillUpForm({ mode, fillUp, vehicles, defaultVehicleId }: FillUpF
 							</label>
 							<Input
 								id="fillup-liters"
-								type="number"
+								type="text"
 								inputMode="decimal"
-								step="0.01"
-								min={0}
 								value={liters}
-								onChange={(e) => setLiters(e.target.value)}
+								onChange={(e) => setLiters(sanitizeDecimalInput(e.target.value))}
 								placeholder="e.g. 40.5"
 							/>
 						</div>
@@ -199,12 +197,10 @@ export function FillUpForm({ mode, fillUp, vehicles, defaultVehicleId }: FillUpF
 							</label>
 							<Input
 								id="fillup-total-price"
-								type="number"
+								type="text"
 								inputMode="decimal"
-								step="0.01"
-								min={0}
 								value={totalPrice}
-								onChange={(e) => setTotalPrice(e.target.value)}
+								onChange={(e) => setTotalPrice(sanitizeDecimalInput(e.target.value))}
 								placeholder="e.g. 250.00"
 							/>
 						</div>

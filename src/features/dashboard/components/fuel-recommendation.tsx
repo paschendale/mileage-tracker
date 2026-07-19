@@ -7,7 +7,7 @@ import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/componen
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { FuelType } from "@/db/schema";
-import { formatCurrency, formatDateDisplay } from "@/lib/format";
+import { formatCurrency, formatDateDisplay, sanitizeDecimalInput } from "@/lib/format";
 import { computeFuelRecommendation, type FuelConfidence, type FuelTypeStats } from "@/services/fuel-comparison";
 import { FuelRecommendationScience } from "./fuel-recommendation-science";
 
@@ -88,12 +88,10 @@ export function FuelRecommendation({ perFuel }: { perFuel: Record<FuelType, Fuel
 								</label>
 								<Input
 									id="fuel-rec-gasoline"
-									type="number"
+									type="text"
 									inputMode="decimal"
-									step="0.01"
-									min={0}
 									value={gasolinePrice}
-									onChange={(e) => setGasolinePrice(e.target.value)}
+									onChange={(e) => setGasolinePrice(sanitizeDecimalInput(e.target.value))}
 									placeholder="e.g. 6.49"
 								/>
 							</div>
@@ -103,12 +101,10 @@ export function FuelRecommendation({ perFuel }: { perFuel: Record<FuelType, Fuel
 								</label>
 								<Input
 									id="fuel-rec-ethanol"
-									type="number"
+									type="text"
 									inputMode="decimal"
-									step="0.01"
-									min={0}
 									value={ethanolPrice}
-									onChange={(e) => setEthanolPrice(e.target.value)}
+									onChange={(e) => setEthanolPrice(sanitizeDecimalInput(e.target.value))}
 									placeholder="e.g. 4.79"
 								/>
 							</div>

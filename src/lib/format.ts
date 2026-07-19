@@ -22,3 +22,8 @@ export function dateToIsoString(date: Date): string {
 export function isoStringToDate(isoDate: string): Date {
 	return parse(isoDate, ISO_DATE_FORMAT, new Date());
 }
+
+/** Normalizes a decimal input value, treating ',' as '.' — many locales (e.g. pt-BR) type commas for decimals. */
+export function sanitizeDecimalInput(value: string): string {
+	return value.replace(",", ".");
+}
