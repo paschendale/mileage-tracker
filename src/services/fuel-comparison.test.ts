@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { FuelType } from "@/db/schema";
 import {
+	computeFuelEfficiencyTrend,
 	computeFuelRecommendation,
 	computeFuelTypeStats,
 	computeMonthlyFuelPriceTrend,
@@ -40,7 +41,7 @@ function row(
 describe("computeFuelTypeStats", () => {
 	it("attributes an interval to the OPENING full tank's fuel, not the closing one", () => {
 		// Gasoline@0km opens, ethanol@500km closes: 500km were driven on gasoline,
-		// even though the closing fill-up (which conventionally displays consumption) is ethanol.
+		// even though the closing fill-up (which conventionally displays efficiency) is ethanol.
 		const rows = [
 			row(1, 0, 40, 200, "gasoline", true, "2026-01-01"),
 			row(2, 500, 35, 250, "ethanol", true, "2026-01-10"),
@@ -181,6 +182,104 @@ describe("computeFuelRecommendation", () => {
 		expect(recommendation.recommended).toBeNull();
 		expect(recommendation.reason).toBe("tie");
 		expect(recommendation.deltaPercent).toBe(0);
+	});
+});
+
+describe("computeFuelEfficiencyTrend", () => {
+	it("reports 'up' when the recent window is meaningfully more efficient than the lifetime average", () => {
+		const rows = [
+			row(1, 0, 10, 50, "gasoline", true),
+			row(2, 100, 10, 50, "gasoline", true),
+			row(3, 200, 10, 50, "gasoline", true),
+			row(4, 300, 10, 50, "gasoline", true),
+			row(5, 400, 8, 50, "gasoline", true),
+			row(6, 500, 8, 50, "gasoline", true),
+		];
+
+		const trend = computeFuelEfficiencyTrend(rows, "gasoline");
+
+		expect(trend.hasEnoughHistory).toBe(true);
+		expect(trend.sampleSize).toBe(3);
+		expect(trend.lifetimeAvgKmPerL).toBeCloseTo(500 / 46, 5);
+		expect(trend.recentAvgKmPerL).toBeCloseTo(300 / 26, 5);
+		expect(trend.direction).toBe("up");
+		expect(trend.deltaPercent).toBeGreaterThan(2);
+	});
+
+	it("reports 'down' when the recent window is meaningfully less efficient than the lifetime average", () => {
+		const rows = [
+			row(1, 0, 8, 50, "gasoline", true),
+			row(2, 100, 8, 50, "gasoline", true),
+			row(3, 200, 10, 50, "gasoline", true),
+			row(4, 300, 10, 50, "gasoline", true),
+			row(5, 400, 10, 50, "gasoline", true),
+			row(6, 500, 10, 50, "gasoline", true),
+		];
+
+		const trend = computeFuelEfficiencyTrend(rows, "gasoline");
+
+		expect(trend.direction).toBe("down");
+		expect(trend.deltaPercent).toBeLessThan(-2);
+	});
+
+	it("reports 'flat' when the recent window matches the lifetime average within the threshold", () => {
+		const rows = [
+			row(1, 0, 10, 50, "gasoline", true),
+			row(2, 100, 10, 50, "gasoline", true),
+			row(3, 200, 10, 50, "gasoline", true),
+			row(4, 300, 10, 50, "gasoline", true),
+			row(5, 400, 10, 50, "gasoline", true),
+			row(6, 500, 10, 50, "gasoline", true),
+		];
+
+		const trend = computeFuelEfficiencyTrend(rows, "gasoline");
+
+		expect(trend.direction).toBe("flat");
+		expect(trend.deltaPercent).toBe(0);
+	});
+
+	it("has insufficient history with fewer than windowSize+2 intervals, but still leaves direction null", () => {
+		const rows = [
+			row(1, 0, 10, 50, "gasoline", true),
+			row(2, 100, 10, 50, "gasoline", true),
+			row(3, 200, 10, 50, "gasoline", true),
+		];
+
+		const trend = computeFuelEfficiencyTrend(rows, "gasoline");
+
+		expect(trend.hasEnoughHistory).toBe(false);
+		expect(trend.direction).toBeNull();
+		expect(trend.deltaPercent).toBeNull();
+	});
+
+	it("returns all nulls and zero sample size when the fuel type has no full-tank intervals at all", () => {
+		const rows = [row(1, 0, 40, 200, "gasoline", true)];
+
+		const trend = computeFuelEfficiencyTrend(rows, "ethanol");
+
+		expect(trend.hasEnoughHistory).toBe(false);
+		expect(trend.recentAvgKmPerL).toBeNull();
+		expect(trend.lifetimeAvgKmPerL).toBeNull();
+		expect(trend.sampleSize).toBe(0);
+	});
+
+	it("only considers intervals opened by the given fuel type, matching computeFuelTypeStats' attribution", () => {
+		const rows = [
+			row(1, 0, 10, 50, "gasoline", true),
+			row(2, 100, 10, 50, "gasoline", true),
+			row(3, 200, 10, 50, "gasoline", true),
+			row(4, 300, 10, 50, "gasoline", true),
+			row(5, 400, 10, 50, "gasoline", true),
+			row(6, 500, 10, 50, "gasoline", true),
+			// A single ethanol interval shouldn't leak into the gasoline trend.
+			row(7, 600, 7, 50, "ethanol", true),
+		];
+
+		const gasolineTrend = computeFuelEfficiencyTrend(rows, "gasoline");
+		const ethanolTrend = computeFuelEfficiencyTrend(rows, "ethanol");
+
+		expect(gasolineTrend.sampleSize).toBe(3);
+		expect(ethanolTrend.hasEnoughHistory).toBe(false);
 	});
 });
 

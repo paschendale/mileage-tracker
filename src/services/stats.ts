@@ -6,7 +6,7 @@ export interface StatsFillUp {
 	totalPrice: number;
 	date: string; // ISO 'YYYY-MM-DD'
 	isFullTank: boolean;
-	consumptionKmPerL: number | null;
+	efficiencyKmPerL: number | null;
 }
 
 function sortedByOdometer(rows: readonly StatsFillUp[]): StatsFillUp[] {
@@ -52,7 +52,7 @@ export function computeAvgCostPerKm(rows: readonly StatsFillUp[]): number | null
 /**
  * Weighted by the bounded full-tank region: (last full odometer - first full
  * odometer) / (liters consumed across that region), rather than an unweighted
- * mean of per-interval consumption values, so longer intervals count more.
+ * mean of per-interval efficiency values, so longer intervals count more.
  */
 export function computeAvgKmPerL(rows: readonly StatsFillUp[]): number | null {
 	const sorted = sortedByOdometer(rows);
@@ -71,17 +71,17 @@ export function computeAvgKmPerL(rows: readonly StatsFillUp[]): number | null {
 	return litersSum > 0 ? distanceKm / litersSum : null;
 }
 
-function nonNullConsumptionValues(rows: readonly StatsFillUp[]): number[] {
-	return rows.map((r) => r.consumptionKmPerL).filter((v): v is number => v !== null);
+function nonNullEfficiencyValues(rows: readonly StatsFillUp[]): number[] {
+	return rows.map((r) => r.efficiencyKmPerL).filter((v): v is number => v !== null);
 }
 
-export function computeBestConsumption(rows: readonly StatsFillUp[]): number | null {
-	const values = nonNullConsumptionValues(rows);
+export function computeBestEfficiency(rows: readonly StatsFillUp[]): number | null {
+	const values = nonNullEfficiencyValues(rows);
 	return values.length > 0 ? Math.max(...values) : null;
 }
 
-export function computeWorstConsumption(rows: readonly StatsFillUp[]): number | null {
-	const values = nonNullConsumptionValues(rows);
+export function computeWorstEfficiency(rows: readonly StatsFillUp[]): number | null {
+	const values = nonNullEfficiencyValues(rows);
 	return values.length > 0 ? Math.min(...values) : null;
 }
 

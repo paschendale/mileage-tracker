@@ -1,6 +1,6 @@
 import { getFillUpsByVehicleId } from "@/db/queries/fillups";
 import type { FillUp } from "@/db/schema";
-import { withComputedMetrics, type WithMetrics } from "./consumption";
+import { withComputedMetrics, type WithMetrics } from "./efficiency";
 
 /**
  * The single source of truth for a vehicle's fill-ups with derived metrics.

@@ -1,6 +1,6 @@
 import type { FuelType } from "@/db/schema";
 
-export type OutlierField = "pricePerLiter" | "consumptionKmPerL";
+export type OutlierField = "pricePerLiter" | "efficiencyKmPerL";
 
 export interface FieldOutlier {
 	field: OutlierField;
@@ -17,7 +17,7 @@ export interface OutlierInput {
 	id: number;
 	fuelType: FuelType;
 	pricePerLiter: number;
-	consumptionKmPerL: number | null;
+	efficiencyKmPerL: number | null;
 }
 
 /** |z| at or above this flags a row as an outlier. */
@@ -73,7 +73,7 @@ function detectFieldOutliers<T extends OutlierInput>(
 }
 
 /**
- * Flags fill-ups whose price/L or consumption deviates significantly from that
+ * Flags fill-ups whose price/L or efficiency deviates significantly from that
  * vehicle's own historical distribution for the same fuel type — gasoline and
  * ethanol have very different normal ranges, so they're never compared against
  * each other. Computed on read, never persisted, matching the rest of this app's
@@ -81,16 +81,16 @@ function detectFieldOutliers<T extends OutlierInput>(
  */
 export function detectOutliers<T extends OutlierInput>(rows: readonly T[]): Map<number, OutlierFlags> {
 	const priceOutliers = detectFieldOutliers(rows, "pricePerLiter", (r) => r.pricePerLiter);
-	const consumptionOutliers = detectFieldOutliers(rows, "consumptionKmPerL", (r) => r.consumptionKmPerL);
+	const efficiencyOutliers = detectFieldOutliers(rows, "efficiencyKmPerL", (r) => r.efficiencyKmPerL);
 
 	const result = new Map<number, OutlierFlags>();
 	for (const row of rows) {
 		const flags: OutlierFlags = {};
 		const price = priceOutliers.get(row.id);
-		const consumption = consumptionOutliers.get(row.id);
+		const efficiency = efficiencyOutliers.get(row.id);
 		if (price) flags.pricePerLiter = price;
-		if (consumption) flags.consumptionKmPerL = consumption;
-		if (price || consumption) result.set(row.id, flags);
+		if (efficiency) flags.efficiencyKmPerL = efficiency;
+		if (price || efficiency) result.set(row.id, flags);
 	}
 
 	return result;

@@ -1,6 +1,6 @@
 import { FUEL_TYPES, type FuelType } from "@/db/schema";
 import { groupBy } from "@/utils/group-by";
-import { findFullTankIntervals, sortByOdometer, type MinimalFillUp } from "./consumption";
+import { findFullTankIntervals, sortByOdometer, type MinimalFillUp } from "./efficiency";
 
 export interface FuelComparisonFillUp extends MinimalFillUp {
 	totalPrice: number;
@@ -36,7 +36,7 @@ export interface FuelTypeStats {
  * already in the tank until the next fill-up, regardless of what's poured in
  * at that next (closing) fill-up. Naively filtering the flat row array by each
  * row's own fuelType before reusing full-tank-interval math would misattribute
- * distance/consumption to the wrong fuel; intervals must be grouped by `open.fuelType`.
+ * distance/efficiency to the wrong fuel; intervals must be grouped by `open.fuelType`.
  */
 export function computeFuelTypeStats(
 	rows: readonly FuelComparisonFillUp[],
@@ -177,6 +177,75 @@ export function computeFuelRecommendation(
 	const deltaPercent = ((higher - lower) / higher) * 100;
 
 	return { recommended, reason, deltaPercent, ...common };
+}
+
+export interface FuelEfficiencyTrend {
+	/** Weighted avg km/L over just the most recent `windowSize` intervals. */
+	recentAvgKmPerL: number | null;
+	/** Weighted avg km/L over every interval opened by this fuel. */
+	lifetimeAvgKmPerL: number | null;
+	/** (recent - lifetime) / lifetime * 100. */
+	deltaPercent: number | null;
+	direction: "up" | "down" | "flat" | null;
+	/** How many recent intervals actually went into recentAvgKmPerL (<= windowSize). */
+	sampleSize: number;
+	/** Gates whether the UI should render a trend at all — too little history makes the comparison meaningless. */
+	hasEnoughHistory: boolean;
+}
+
+const TREND_WINDOW = 3;
+
+/** |deltaPercent| below this is shown as "flat" rather than up/down. */
+const TREND_FLAT_THRESHOLD_PERCENT = 2;
+
+function weightedAvgKmPerL(intervals: readonly { distanceKm: number; litersSum: number }[]): number | null {
+	const distanceKm = intervals.reduce((sum, i) => sum + i.distanceKm, 0);
+	const litersSum = intervals.reduce((sum, i) => sum + i.litersSum, 0);
+	return litersSum > 0 ? distanceKm / litersSum : null;
+}
+
+/**
+ * Compares a fuel's recent efficiency (last `windowSize` full-tank intervals)
+ * against its lifetime average, to answer "is this vehicle getting more or
+ * less efficient lately". Same open.fuelType attribution as computeFuelTypeStats.
+ */
+export function computeFuelEfficiencyTrend(
+	rows: readonly FuelComparisonFillUp[],
+	fuelType: FuelType,
+	windowSize = TREND_WINDOW,
+): FuelEfficiencyTrend {
+	const sorted = sortByOdometer(rows);
+	const intervals = findFullTankIntervals(sorted).filter((interval) => interval.open.fuelType === fuelType);
+
+	const recentIntervals = intervals.slice(-windowSize);
+	const recentAvgKmPerL = weightedAvgKmPerL(recentIntervals);
+	const lifetimeAvgKmPerL = weightedAvgKmPerL(intervals);
+
+	const hasEnoughHistory = intervals.length >= windowSize + 2;
+
+	if (!hasEnoughHistory || recentAvgKmPerL === null || lifetimeAvgKmPerL === null) {
+		return {
+			recentAvgKmPerL,
+			lifetimeAvgKmPerL,
+			deltaPercent: null,
+			direction: null,
+			sampleSize: recentIntervals.length,
+			hasEnoughHistory,
+		};
+	}
+
+	const deltaPercent = ((recentAvgKmPerL - lifetimeAvgKmPerL) / lifetimeAvgKmPerL) * 100;
+	const direction: FuelEfficiencyTrend["direction"] =
+		Math.abs(deltaPercent) < TREND_FLAT_THRESHOLD_PERCENT ? "flat" : deltaPercent > 0 ? "up" : "down";
+
+	return {
+		recentAvgKmPerL,
+		lifetimeAvgKmPerL,
+		deltaPercent,
+		direction,
+		sampleSize: recentIntervals.length,
+		hasEnoughHistory,
+	};
 }
 
 export interface MonthlyFuelPricePoint {

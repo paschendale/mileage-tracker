@@ -21,17 +21,17 @@ const METRIC_ROWS: MetricRow[] = [
 		format: (s) => (s.latestPricePerLiter !== null ? formatCurrency(s.latestPricePerLiter) : "—"),
 	},
 	{
-		label: "Avg. consumption",
+		label: "Avg. efficiency",
 		format: (s) => (s.avgKmPerL !== null ? `${formatNumber(s.avgKmPerL, { maximumFractionDigits: 2 })} km/L` : "—"),
 	},
 	{
-		label: "Best consumption",
-		format: (s) => (s.bestConsumption !== null ? `${formatNumber(s.bestConsumption, { maximumFractionDigits: 2 })} km/L` : "—"),
+		label: "Best efficiency",
+		format: (s) => (s.bestEfficiency !== null ? `${formatNumber(s.bestEfficiency, { maximumFractionDigits: 2 })} km/L` : "—"),
 	},
 	{
-		label: "Worst consumption",
+		label: "Worst efficiency",
 		format: (s) =>
-			s.worstConsumption !== null ? `${formatNumber(s.worstConsumption, { maximumFractionDigits: 2 })} km/L` : "—",
+			s.worstEfficiency !== null ? `${formatNumber(s.worstEfficiency, { maximumFractionDigits: 2 })} km/L` : "—",
 	},
 	{
 		label: "Estimated autonomy",

@@ -3,12 +3,12 @@ import {
 	computeAvgCostPerKm,
 	computeAvgFuelPrice,
 	computeAvgKmPerL,
-	computeBestConsumption,
+	computeBestEfficiency,
 	computeDistanceTraveled,
 	computeEstimatedAutonomyKm,
 	computeTotalLiters,
 	computeTotalSpent,
-	computeWorstConsumption,
+	computeWorstEfficiency,
 	groupByMonth,
 	type StatsFillUp,
 } from "./stats";
@@ -17,21 +17,21 @@ function row(partial: Partial<StatsFillUp> & Pick<StatsFillUp, "odometerKm" | "l
 	return {
 		date: "2026-01-01",
 		isFullTank: true,
-		consumptionKmPerL: null,
+		efficiencyKmPerL: null,
 		...partial,
 	};
 }
 
 describe("stats", () => {
 	const rows: StatsFillUp[] = [
-		row({ odometerKm: 0, liters: 40, totalPrice: 200, date: "2026-01-01", isFullTank: true, consumptionKmPerL: null }),
+		row({ odometerKm: 0, liters: 40, totalPrice: 200, date: "2026-01-01", isFullTank: true, efficiencyKmPerL: null }),
 		row({
 			odometerKm: 700,
 			liters: 10,
 			totalPrice: 60,
 			date: "2026-01-15",
 			isFullTank: false,
-			consumptionKmPerL: null,
+			efficiencyKmPerL: null,
 		}),
 		row({
 			odometerKm: 900,
@@ -39,7 +39,7 @@ describe("stats", () => {
 			totalPrice: 150,
 			date: "2026-02-01",
 			isFullTank: true,
-			consumptionKmPerL: 900 / 35,
+			efficiencyKmPerL: 900 / 35,
 		}),
 	];
 
@@ -58,9 +58,9 @@ describe("stats", () => {
 		expect(computeAvgKmPerL(rows)).toBeCloseTo(900 / 35, 5);
 	});
 
-	it("computes best/worst consumption from non-null values only", () => {
-		expect(computeBestConsumption(rows)).toBeCloseTo(900 / 35, 5);
-		expect(computeWorstConsumption(rows)).toBeCloseTo(900 / 35, 5);
+	it("computes best/worst efficiency from non-null values only", () => {
+		expect(computeBestEfficiency(rows)).toBeCloseTo(900 / 35, 5);
+		expect(computeWorstEfficiency(rows)).toBeCloseTo(900 / 35, 5);
 	});
 
 	it("computes estimated autonomy as the mean full-tank interval distance", () => {
@@ -79,6 +79,6 @@ describe("stats", () => {
 		expect(computeAvgKmPerL([])).toBeNull();
 		expect(computeAvgFuelPrice([])).toBeNull();
 		expect(computeEstimatedAutonomyKm([])).toBeNull();
-		expect(computeBestConsumption([])).toBeNull();
+		expect(computeBestEfficiency([])).toBeNull();
 	});
 });

@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import type { FuelType } from "@/db/schema";
 import { detectOutliers, type OutlierInput } from "./outliers";
 
-function row(id: number, fuelType: FuelType, pricePerLiter: number, consumptionKmPerL: number | null = null): OutlierInput {
-	return { id, fuelType, pricePerLiter, consumptionKmPerL };
+function row(id: number, fuelType: FuelType, pricePerLiter: number, efficiencyKmPerL: number | null = null): OutlierInput {
+	return { id, fuelType, pricePerLiter, efficiencyKmPerL };
 }
 
 describe("detectOutliers", () => {
@@ -53,20 +53,20 @@ describe("detectOutliers", () => {
 		expect(flags.has(1)).toBe(false);
 	});
 
-	it("flags a clear consumption outlier independently of price", () => {
+	it("flags a clear efficiency outlier independently of price", () => {
 		const rows = [
 			row(1, "ethanol", 3.0, 8.0),
 			row(2, "ethanol", 3.0, 8.2),
 			row(3, "ethanol", 3.0, 7.8),
 			row(4, "ethanol", 3.0, 8.1),
 			row(5, "ethanol", 3.0, 7.9),
-			row(6, "ethanol", 3.0, 1.5), // implausibly low consumption
+			row(6, "ethanol", 3.0, 1.5), // implausibly low efficiency
 		];
 
 		const flags = detectOutliers(rows);
 
 		expect(flags.has(6)).toBe(true);
-		expect(flags.get(6)!.consumptionKmPerL).toBeDefined();
+		expect(flags.get(6)!.efficiencyKmPerL).toBeDefined();
 		expect(flags.get(6)!.pricePerLiter).toBeUndefined();
 	});
 

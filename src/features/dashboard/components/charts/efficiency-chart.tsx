@@ -5,14 +5,14 @@ import { ChartCard } from "@/components/charts/chart-card";
 import { chartTooltipContentStyle, chartTooltipItemStyle, chartTooltipLabelStyle } from "@/components/charts/tooltip-style";
 import { formatDateDisplay, formatNumber } from "@/lib/format";
 
-interface ConsumptionPoint {
+interface EfficiencyPoint {
 	date: string;
-	consumptionKmPerL: number;
+	efficiencyKmPerL: number;
 }
 
-export function ConsumptionChart({ points }: { points: ConsumptionPoint[] }) {
+export function EfficiencyChart({ points }: { points: EfficiencyPoint[] }) {
 	return (
-		<ChartCard title="Consumption over time">
+		<ChartCard title="Efficiency over time">
 			<ResponsiveContainer width="100%" height="100%">
 				<LineChart data={points} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
 					<CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-border" />
@@ -27,12 +27,12 @@ export function ConsumptionChart({ points }: { points: ConsumptionPoint[] }) {
 						contentStyle={chartTooltipContentStyle}
 						labelStyle={chartTooltipLabelStyle}
 						itemStyle={chartTooltipItemStyle}
-						formatter={(value) => [`${formatNumber(Number(value), { maximumFractionDigits: 2 })} km/L`, "Consumption"]}
+						formatter={(value) => [`${formatNumber(Number(value), { maximumFractionDigits: 2 })} km/L`, "Efficiency"]}
 						labelFormatter={(label) => formatDateDisplay(String(label))}
 					/>
 					<Line
 						type="monotone"
-						dataKey="consumptionKmPerL"
+						dataKey="efficiencyKmPerL"
 						stroke="var(--chart-1)"
 						strokeWidth={2}
 						dot={false}

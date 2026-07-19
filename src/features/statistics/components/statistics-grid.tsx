@@ -9,7 +9,7 @@ export function StatisticsGrid({ data }: { data: StatisticsData }) {
 			<StatCard label="Fill-ups" value={String(data.fillUpCount)} />
 			<StatCard label="Distance traveled" value={`${formatNumber(data.distanceTraveled)} km`} />
 			<StatCard label="Total spent" value={formatCurrency(data.totalSpent)} />
-			<StatCard label="Fuel consumed" value={`${formatNumber(data.totalLiters, { maximumFractionDigits: 1 })} L`} />
+			<StatCard label="Fuel used" value={`${formatNumber(data.totalLiters, { maximumFractionDigits: 1 })} L`} />
 			<StatCard
 				label="Avg. monthly distance"
 				value={

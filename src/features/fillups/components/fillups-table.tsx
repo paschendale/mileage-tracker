@@ -1,4 +1,4 @@
-import { Fuel, TriangleAlertIcon } from "lucide-react";
+import { Fuel, Trophy, TriangleAlertIcon } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -13,7 +13,7 @@ import { SortableColumnHeader } from "./sortable-column-header";
 function outlierTooltip(outlier: FieldOutlier, fuelType: string): string {
 	const direction = outlier.percentDeviation >= 0 ? "above" : "below";
 	const percent = formatNumber(Math.abs(outlier.percentDeviation), { maximumFractionDigits: 0 });
-	const label = outlier.field === "pricePerLiter" ? "Price/L" : "Consumption";
+	const label = outlier.field === "pricePerLiter" ? "Price/L" : "Efficiency";
 	const value =
 		outlier.field === "pricePerLiter"
 			? formatCurrency(outlier.value)
@@ -32,6 +32,17 @@ function OutlierWarning({ outlier, fuelType }: { outlier: FieldOutlier; fuelType
 				<TriangleAlertIcon className="size-3.5 text-amber-500" />
 			</TooltipTrigger>
 			<TooltipContent>{outlierTooltip(outlier, fuelType)}</TooltipContent>
+		</Tooltip>
+	);
+}
+
+function PersonalBestBadge({ fuelType }: { fuelType: string }) {
+	return (
+		<Tooltip>
+			<TooltipTrigger className="inline-flex align-middle">
+				<Trophy className="size-3.5 text-amber-500" />
+			</TooltipTrigger>
+			<TooltipContent>Best {fuelType} efficiency recorded</TooltipContent>
 		</Tooltip>
 	);
 }
@@ -79,7 +90,7 @@ export function FillUpsTable({ rows, sort, dir, searchParams }: FillUpsTableProp
 						</TableHead>
 						<TableHead>Full tank</TableHead>
 						<TableHead>
-							<SortableColumnHeader label="Consumption" field="consumptionKmPerL" {...headerProps} />
+							<SortableColumnHeader label="Efficiency" field="efficiencyKmPerL" {...headerProps} />
 						</TableHead>
 						<TableHead className="text-right">Actions</TableHead>
 					</TableRow>
@@ -117,12 +128,13 @@ export function FillUpsTable({ rows, sort, dir, searchParams }: FillUpsTableProp
 								</TableCell>
 								<TableCell className="whitespace-nowrap tabular-nums">
 									<span className="inline-flex items-center gap-1.5">
-										{row.consumptionKmPerL !== null
-											? `${formatNumber(row.consumptionKmPerL, { maximumFractionDigits: 2 })} km/L`
+										{row.efficiencyKmPerL !== null
+											? `${formatNumber(row.efficiencyKmPerL, { maximumFractionDigits: 2 })} km/L`
 											: "—"}
-										{row.outliers.consumptionKmPerL && (
-											<OutlierWarning outlier={row.outliers.consumptionKmPerL} fuelType={row.fuelType} />
+										{row.outliers.efficiencyKmPerL && (
+											<OutlierWarning outlier={row.outliers.efficiencyKmPerL} fuelType={row.fuelType} />
 										)}
+										{row.isPersonalBest && <PersonalBestBadge fuelType={row.fuelType} />}
 									</span>
 								</TableCell>
 								<TableCell>

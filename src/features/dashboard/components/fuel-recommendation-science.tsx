@@ -11,10 +11,31 @@ import { cn } from "@/lib/utils";
 
 const FUEL_LABELS: Record<FuelType, string> = { gasoline: "Gasoline", ethanol: "Ethanol" };
 
-function buildHeadline(recommendation: FuelRecommendation): string {
+/** Which fuel gets more km out of a liter, and by how much — independent of cost. */
+function buildEfficiencyClause(
+	gasoline: FuelTypeStats,
+	ethanol: FuelTypeStats,
+): { moreEfficient: FuelType | null; deltaPercent: number | null } {
+	if (gasoline.avgKmPerL === null || ethanol.avgKmPerL === null) return { moreEfficient: null, deltaPercent: null };
+	if (gasoline.avgKmPerL === ethanol.avgKmPerL) return { moreEfficient: null, deltaPercent: 0 };
+
+	const moreEfficient: FuelType = gasoline.avgKmPerL > ethanol.avgKmPerL ? "gasoline" : "ethanol";
+	const higher = Math.max(gasoline.avgKmPerL, ethanol.avgKmPerL);
+	const lower = Math.min(gasoline.avgKmPerL, ethanol.avgKmPerL);
+	return { moreEfficient, deltaPercent: ((higher - lower) / lower) * 100 };
+}
+
+function buildHeadline(recommendation: FuelRecommendation, gasoline: FuelTypeStats, ethanol: FuelTypeStats): string {
 	const { reason, recommended, gasolineCostPerKm, ethanolCostPerKm, deltaPercent } = recommendation;
+	const efficiency = buildEfficiencyClause(gasoline, ethanol);
+	const effLabel = efficiency.moreEfficient ? FUEL_LABELS[efficiency.moreEfficient] : null;
+	const effPercent =
+		efficiency.deltaPercent !== null ? formatNumber(efficiency.deltaPercent, { maximumFractionDigits: 1 }) : null;
 
 	if (reason === "tie") {
+		if (effLabel && effPercent) {
+			return `${effLabel} is ${effPercent}% more efficient per liter, but gasoline and ethanol currently cost about the same per km — no clear winner.`;
+		}
 		return "Gasoline and ethanol currently cost about the same per km — no clear winner.";
 	}
 	if (!recommended || gasolineCostPerKm === null || ethanolCostPerKm === null || deltaPercent === null) {
@@ -24,11 +45,32 @@ function buildHeadline(recommendation: FuelRecommendation): string {
 	const winnerCost = recommended === "gasoline" ? gasolineCostPerKm : ethanolCostPerKm;
 	const otherCost = recommended === "gasoline" ? ethanolCostPerKm : gasolineCostPerKm;
 	const otherFuel = recommended === "gasoline" ? "ethanol" : "gasoline";
+	const costPercent = formatNumber(deltaPercent, { maximumFractionDigits: 1 });
 
-	return `${FUEL_LABELS[recommended]} is estimated to cost ${formatCurrency(winnerCost)}/km vs. ${formatCurrency(otherCost)}/km for ${otherFuel} — about ${formatNumber(deltaPercent, { maximumFractionDigits: 1 })}% cheaper per km, based on your vehicle's fuel history.`;
+	if (efficiency.moreEfficient === recommended && effPercent) {
+		return `${FUEL_LABELS[recommended]} wins on both counts — ${effPercent}% more efficient per liter and ${costPercent}% cheaper per km than ${otherFuel}.`;
+	}
+
+	if (efficiency.moreEfficient && efficiency.moreEfficient !== recommended && effPercent) {
+		return `${effLabel} is ${effPercent}% more efficient per liter, but ${FUEL_LABELS[recommended]} is cheaper per km (${formatCurrency(winnerCost)} vs. ${formatCurrency(otherCost)}) at current prices — so ${FUEL_LABELS[recommended]} is the better buy for your vehicle right now.`;
+	}
+
+	return `${FUEL_LABELS[recommended]} is estimated to cost ${formatCurrency(winnerCost)}/km vs. ${formatCurrency(otherCost)}/km for ${otherFuel} — about ${costPercent}% cheaper per km, based on your vehicle's fuel history.`;
 }
 
-function CostBar({ label, value, maxValue, isWinner }: { label: string; value: number; maxValue: number; isWinner: boolean }) {
+function MetricBar({
+	label,
+	value,
+	maxValue,
+	isWinner,
+	formatValue,
+}: {
+	label: string;
+	value: number;
+	maxValue: number;
+	isWinner: boolean;
+	formatValue: (value: number) => string;
+}) {
 	const widthPercent = maxValue > 0 ? Math.max((value / maxValue) * 100, 4) : 0;
 	return (
 		<div className="flex items-center gap-3">
@@ -42,7 +84,7 @@ function CostBar({ label, value, maxValue, isWinner }: { label: string; value: n
 					style={{ width: `${widthPercent}%` }}
 				/>
 			</div>
-			<span className="w-24 shrink-0 text-right text-sm tabular-nums text-muted-foreground">{formatCurrency(value)}/km</span>
+			<span className="w-24 shrink-0 text-right text-sm tabular-nums text-muted-foreground">{formatValue(value)}</span>
 		</div>
 	);
 }
@@ -155,10 +197,13 @@ export function FuelRecommendationScience({
 	const todayEthanolPrice = ethanolCostPerKm! * ethanol.avgKmPerL;
 	const maxCostPerKm = Math.max(gasolineCostPerKm!, ethanolCostPerKm!);
 
+	const efficiency = buildEfficiencyClause(gasoline, ethanol);
+	const maxKmPerL = Math.max(gasoline.avgKmPerL, ethanol.avgKmPerL);
+
 	return (
 		<div className="flex flex-col gap-5">
 			<div className="flex items-start justify-between gap-2">
-				<p className="text-sm font-medium">{buildHeadline(recommendation)}</p>
+				<p className="text-sm font-medium">{buildHeadline(recommendation, gasoline, ethanol)}</p>
 				<Popover>
 					<PopoverTrigger
 						render={
@@ -172,9 +217,39 @@ export function FuelRecommendationScience({
 			</div>
 
 			<div className="flex flex-col gap-2">
+				<p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Efficiency (km/L)</p>
+				<MetricBar
+					label="Gasoline"
+					value={gasoline.avgKmPerL}
+					maxValue={maxKmPerL}
+					isWinner={efficiency.moreEfficient === "gasoline"}
+					formatValue={(v) => `${formatNumber(v, { maximumFractionDigits: 2 })} km/L`}
+				/>
+				<MetricBar
+					label="Ethanol"
+					value={ethanol.avgKmPerL}
+					maxValue={maxKmPerL}
+					isWinner={efficiency.moreEfficient === "ethanol"}
+					formatValue={(v) => `${formatNumber(v, { maximumFractionDigits: 2 })} km/L`}
+				/>
+			</div>
+
+			<div className="flex flex-col gap-2">
 				<p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Cost per km</p>
-				<CostBar label="Gasoline" value={gasolineCostPerKm!} maxValue={maxCostPerKm} isWinner={recommendation.recommended === "gasoline"} />
-				<CostBar label="Ethanol" value={ethanolCostPerKm!} maxValue={maxCostPerKm} isWinner={recommendation.recommended === "ethanol"} />
+				<MetricBar
+					label="Gasoline"
+					value={gasolineCostPerKm!}
+					maxValue={maxCostPerKm}
+					isWinner={recommendation.recommended === "gasoline"}
+					formatValue={(v) => `${formatCurrency(v)}/km`}
+				/>
+				<MetricBar
+					label="Ethanol"
+					value={ethanolCostPerKm!}
+					maxValue={maxCostPerKm}
+					isWinner={recommendation.recommended === "ethanol"}
+					formatValue={(v) => `${formatCurrency(v)}/km`}
+				/>
 			</div>
 
 			<BreakEvenMeter todayPrice={todayEthanolPrice} breakEvenPrice={breakEvenEthanolPricePerLiter!} />

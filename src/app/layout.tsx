@@ -13,7 +13,7 @@ const openSans = Open_Sans({
 
 export const metadata: Metadata = {
 	title: "Mileage Tracker",
-	description: "Personal fuel consumption tracker",
+	description: "Personal fuel efficiency tracker",
 };
 
 export default function RootLayout({

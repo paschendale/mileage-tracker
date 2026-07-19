@@ -10,12 +10,12 @@ import { detectOutliers } from "@/services/outliers";
 import {
 	computeAvgMonthlyDistance,
 	computeAvgMonthlySpending,
-	computeBestConsumption,
+	computeBestEfficiency,
 	computeDistanceTraveled,
 	computeFillUpCount,
 	computeTotalLiters,
 	computeTotalSpent,
-	computeWorstConsumption,
+	computeWorstEfficiency,
 	groupByMonth,
 	groupByYear,
 	type MonthlyAggregate,
@@ -23,9 +23,9 @@ import {
 } from "@/services/stats";
 
 export interface FuelStatistics extends FuelTypeStats {
-	/** Best/worst measured consumption for this fuel, excluding fill-ups flagged as consumption outliers. */
-	bestConsumption: number | null;
-	worstConsumption: number | null;
+	/** Best/worst measured efficiency for this fuel, excluding fill-ups flagged as efficiency outliers. */
+	bestEfficiency: number | null;
+	worstEfficiency: number | null;
 }
 
 export interface StatisticsData {
@@ -55,15 +55,15 @@ export async function getStatisticsData(vehicle: Vehicle): Promise<StatisticsDat
 	const perFuel = Object.fromEntries(
 		FUEL_TYPES.map((fuelType) => {
 			const stats = computeFuelTypeStats(fillUps, fuelType, vehicle.tankCapacityLiters);
-			// A row flagged as a consumption outlier (like a mistyped odometer reading)
+			// A row flagged as an efficiency outlier (like a mistyped odometer reading)
 			// shouldn't get to masquerade as this fuel's "best" or "worst" fill-up.
 			const cleanRows = fillUps.filter(
-				(f) => f.fuelType === fuelType && !outlierMap.get(f.id)?.consumptionKmPerL,
+				(f) => f.fuelType === fuelType && !outlierMap.get(f.id)?.efficiencyKmPerL,
 			);
 			const fuelStatistics: FuelStatistics = {
 				...stats,
-				bestConsumption: computeBestConsumption(cleanRows),
-				worstConsumption: computeWorstConsumption(cleanRows),
+				bestEfficiency: computeBestEfficiency(cleanRows),
+				worstEfficiency: computeWorstEfficiency(cleanRows),
 			};
 			return [fuelType, fuelStatistics];
 		}),

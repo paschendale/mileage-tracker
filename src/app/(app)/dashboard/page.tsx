@@ -42,7 +42,12 @@ export default async function DashboardPage() {
 
 			<FuelRecommendation perFuel={data.perFuel} />
 
-			<FuelSwitcherView fillUps={data.fillUps} perFuel={data.perFuel} defaultFuelType={data.lastFillUpFuelType} />
+			<FuelSwitcherView
+				fillUps={data.fillUps}
+				perFuel={data.perFuel}
+				efficiencyTrend={data.efficiencyTrend}
+				defaultFuelType={data.lastFillUpFuelType}
+			/>
 
 			<ChartsSection fillUps={data.fillUps} />
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { withComputedMetrics } from "./consumption";
+import { withComputedMetrics } from "./efficiency";
 
 interface Row {
 	id: number;
@@ -21,24 +21,24 @@ describe("withComputedMetrics", () => {
 
 		// The opening full tank (450km) mirrors the interval it opens, since it can
 		// never be anyone's "closing" row and would otherwise be permanently null.
-		expect(result[0]!.consumptionKmPerL).toBeCloseTo((900 - 450) / (10 + 25), 5);
-		expect(result[1]!.consumptionKmPerL).toBeNull();
-		expect(result[2]!.consumptionKmPerL).toBeCloseTo((900 - 450) / (10 + 25), 5);
+		expect(result[0]!.efficiencyKmPerL).toBeCloseTo((900 - 450) / (10 + 25), 5);
+		expect(result[1]!.efficiencyKmPerL).toBeNull();
+		expect(result[2]!.efficiencyKmPerL).toBeCloseTo((900 - 450) / (10 + 25), 5);
 
 		expect(result[0]!.distanceSincePreviousKm).toBeNull();
 		expect(result[1]!.distanceSincePreviousKm).toBe(250);
 		expect(result[2]!.distanceSincePreviousKm).toBe(200);
 	});
 
-	it("mirrors the first interval's consumption onto the very first full tank of a vehicle's history", () => {
+	it("mirrors the first interval's efficiency onto the very first full tank of a vehicle's history", () => {
 		// This is the case that can never otherwise get a value: it has no
 		// preceding full tank, so under the base rule it would stay null forever.
 		const rows = [row(1, 0, 40, true), row(2, 477, 41.26, true)];
 
 		const result = withComputedMetrics(rows);
 
-		expect(result[1]!.consumptionKmPerL).toBeCloseTo(477 / 41.26, 5);
-		expect(result[0]!.consumptionKmPerL).toBeCloseTo(477 / 41.26, 5);
+		expect(result[1]!.efficiencyKmPerL).toBeCloseTo(477 / 41.26, 5);
+		expect(result[0]!.efficiencyKmPerL).toBeCloseTo(477 / 41.26, 5);
 	});
 
 	it("does not mirror onto the first row when it isn't itself a full tank", () => {
@@ -48,8 +48,8 @@ describe("withComputedMetrics", () => {
 
 		// row 1 opens no interval of its own (it's a partial before the first full
 		// tank) -- it has nothing to mirror and correctly stays null.
-		expect(result[0]!.consumptionKmPerL).toBeNull();
-		expect(result[2]!.consumptionKmPerL).toBeCloseTo(300 / 30, 5);
+		expect(result[0]!.efficiencyKmPerL).toBeNull();
+		expect(result[2]!.efficiencyKmPerL).toBeCloseTo(300 / 30, 5);
 	});
 
 	it("handles a chain of two consecutive partials between two full tanks", () => {
@@ -63,20 +63,20 @@ describe("withComputedMetrics", () => {
 		const result = withComputedMetrics(rows);
 
 		// distance 600-0=600, liters = 8 + 12 + 30 (partials + closing full)
-		expect(result[3]!.consumptionKmPerL).toBeCloseTo(600 / (8 + 12 + 30), 5);
-		expect(result[1]!.consumptionKmPerL).toBeNull();
-		expect(result[2]!.consumptionKmPerL).toBeNull();
+		expect(result[3]!.efficiencyKmPerL).toBeCloseTo(600 / (8 + 12 + 30), 5);
+		expect(result[1]!.efficiencyKmPerL).toBeNull();
+		expect(result[2]!.efficiencyKmPerL).toBeNull();
 	});
 
-	it("leaves consumption null before the first full tank and with no closing full tank", () => {
+	it("leaves efficiency null before the first full tank and with no closing full tank", () => {
 		const rows = [row(1, 0, 40, false), row(2, 300, 35, true), row(3, 600, 10, false)];
 
 		const result = withComputedMetrics(rows);
 
-		expect(result[0]!.consumptionKmPerL).toBeNull();
+		expect(result[0]!.efficiencyKmPerL).toBeNull();
 		// only one full tank exists, so no interval can be closed
-		expect(result[1]!.consumptionKmPerL).toBeNull();
-		expect(result[2]!.consumptionKmPerL).toBeNull();
+		expect(result[1]!.efficiencyKmPerL).toBeNull();
+		expect(result[2]!.efficiencyKmPerL).toBeNull();
 	});
 
 	it("cross-validates against a real slice of data.json (all rows treated as full tanks)", () => {
@@ -95,11 +95,11 @@ describe("withComputedMetrics", () => {
 
 		const result = withComputedMetrics(rows);
 
-		expect(result[1]!.consumptionKmPerL).toBeCloseTo(11.56, 1);
-		expect(result[2]!.consumptionKmPerL).toBeCloseTo(10.14, 1);
-		expect(result[3]!.consumptionKmPerL).toBeCloseTo(11.62, 1);
-		expect(result[4]!.consumptionKmPerL).toBeCloseTo(13.62, 1);
-		expect(result[5]!.consumptionKmPerL).toBeCloseTo(12.49, 1);
+		expect(result[1]!.efficiencyKmPerL).toBeCloseTo(11.56, 1);
+		expect(result[2]!.efficiencyKmPerL).toBeCloseTo(10.14, 1);
+		expect(result[3]!.efficiencyKmPerL).toBeCloseTo(11.62, 1);
+		expect(result[4]!.efficiencyKmPerL).toBeCloseTo(13.62, 1);
+		expect(result[5]!.efficiencyKmPerL).toBeCloseTo(12.49, 1);
 	});
 
 	it("sorts unordered input by odometer before computing", () => {
@@ -108,6 +108,6 @@ describe("withComputedMetrics", () => {
 		const result = withComputedMetrics(rows);
 
 		expect(result.map((r) => r.id)).toEqual([1, 2, 3]);
-		expect(result[2]!.consumptionKmPerL).toBeCloseTo((900 - 450) / (10 + 25), 5);
+		expect(result[2]!.efficiencyKmPerL).toBeCloseTo((900 - 450) / (10 + 25), 5);
 	});
 });

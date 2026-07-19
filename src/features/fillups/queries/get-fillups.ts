@@ -1,14 +1,18 @@
-import type { FillUp } from "@/db/schema";
+import type { FillUp, FuelType } from "@/db/schema";
 import { getVehicleFillUpsWithMetrics } from "@/services/fillups";
-import type { WithMetrics } from "@/services/consumption";
+import type { WithMetrics } from "@/services/efficiency";
 import { detectOutliers, type OutlierFlags } from "@/services/outliers";
 import { paginate, type PaginatedResult } from "@/utils/pagination";
 
-export const SORTABLE_FIELDS = ["date", "odometerKm", "liters", "totalPrice", "pricePerLiter", "consumptionKmPerL"] as const;
+export const SORTABLE_FIELDS = ["date", "odometerKm", "liters", "totalPrice", "pricePerLiter", "efficiencyKmPerL"] as const;
 export type SortableField = (typeof SORTABLE_FIELDS)[number];
 export type SortDirection = "asc" | "desc";
 
-export type FillUpRow = WithMetrics<FillUp> & { pricePerLiter: number; outliers: OutlierFlags };
+export type FillUpRow = WithMetrics<FillUp> & {
+	pricePerLiter: number;
+	outliers: OutlierFlags;
+	isPersonalBest: boolean;
+};
 
 export interface GetFillUpsPageOptions {
 	query?: string;
@@ -30,8 +34,8 @@ function compareRows(a: FillUpRow, b: FillUpRow, sort: SortableField): number {
 			return a.totalPrice - b.totalPrice;
 		case "pricePerLiter":
 			return a.pricePerLiter - b.pricePerLiter;
-		case "consumptionKmPerL":
-			return (a.consumptionKmPerL ?? -Infinity) - (b.consumptionKmPerL ?? -Infinity);
+		case "efficiencyKmPerL":
+			return (a.efficiencyKmPerL ?? -Infinity) - (b.efficiencyKmPerL ?? -Infinity);
 	}
 }
 
@@ -48,9 +52,21 @@ export async function getFillUpsPage(
 	// Computed on the full vehicle history, before search/sort/pagination, so
 	// flags reflect the whole history rather than shifting with the active page.
 	const outlierMap = detectOutliers(withPricePerLiter);
+
+	// The record-holding row per fuel type, excluding outliers (a mistyped
+	// odometer reading shouldn't get to "hold the record") — same exclusion
+	// rule get-statistics.ts uses for best/worst efficiency.
+	const bestByFuelType = new Map<FuelType, number>();
+	for (const row of withPricePerLiter) {
+		if (row.efficiencyKmPerL === null || outlierMap.get(row.id)?.efficiencyKmPerL) continue;
+		const current = bestByFuelType.get(row.fuelType);
+		if (current === undefined || row.efficiencyKmPerL > current) bestByFuelType.set(row.fuelType, row.efficiencyKmPerL);
+	}
+
 	const withOutliers: FillUpRow[] = withPricePerLiter.map((row) => ({
 		...row,
 		outliers: outlierMap.get(row.id) ?? {},
+		isPersonalBest: row.efficiencyKmPerL !== null && bestByFuelType.get(row.fuelType) === row.efficiencyKmPerL,
 	}));
 
 	const query = options.query?.trim().toLowerCase();

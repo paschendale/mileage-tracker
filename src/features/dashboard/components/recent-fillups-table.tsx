@@ -1,14 +1,14 @@
-import { Fuel } from "lucide-react";
+import { Fuel, Trophy } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { FillUp } from "@/db/schema";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatCurrency, formatDateDisplay, formatNumber } from "@/lib/format";
-import type { WithMetrics } from "@/services/consumption";
+import type { DashboardFillUp } from "../lib/get-dashboard-data";
 
 const RECENT_COUNT = 5;
 
-export function RecentFillUpsTable({ fillUps }: { fillUps: WithMetrics<FillUp>[] }) {
+export function RecentFillUpsTable({ fillUps }: { fillUps: DashboardFillUp[] }) {
 	const recent = [...fillUps].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id).slice(0, RECENT_COUNT);
 
 	if (recent.length === 0) {
@@ -33,7 +33,7 @@ export function RecentFillUpsTable({ fillUps }: { fillUps: WithMetrics<FillUp>[]
 						<TableHead>Liters</TableHead>
 						<TableHead>Total price</TableHead>
 						<TableHead>Full tank</TableHead>
-						<TableHead>Consumption</TableHead>
+						<TableHead>Efficiency</TableHead>
 					</TableRow>
 				</TableHeader>
 				<TableBody>
@@ -52,9 +52,19 @@ export function RecentFillUpsTable({ fillUps }: { fillUps: WithMetrics<FillUp>[]
 								)}
 							</TableCell>
 							<TableCell className="whitespace-nowrap tabular-nums">
-								{row.consumptionKmPerL !== null
-									? `${formatNumber(row.consumptionKmPerL, { maximumFractionDigits: 2 })} km/L`
-									: "—"}
+								<span className="inline-flex items-center gap-1.5">
+									{row.efficiencyKmPerL !== null
+										? `${formatNumber(row.efficiencyKmPerL, { maximumFractionDigits: 2 })} km/L`
+										: "—"}
+									{row.isPersonalBest && (
+										<Tooltip>
+											<TooltipTrigger className="inline-flex align-middle">
+												<Trophy className="size-3.5 text-amber-500" />
+											</TooltipTrigger>
+											<TooltipContent>Best {row.fuelType} efficiency recorded</TooltipContent>
+										</Tooltip>
+									)}
+								</span>
 							</TableCell>
 						</TableRow>
 					))}

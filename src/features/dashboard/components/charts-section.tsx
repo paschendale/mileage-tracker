@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { FillUp } from "@/db/schema";
-import type { WithMetrics } from "@/services/consumption";
+import type { WithMetrics } from "@/services/efficiency";
 import { groupByMonth } from "@/services/stats";
 
 const ChartSkeleton = () => <Skeleton className="h-[21.5rem] w-full rounded-xl" />;
