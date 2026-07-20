@@ -1,15 +1,10 @@
-import type { FillUp, FuelType, Vehicle } from "@/db/schema";
-import { FUEL_TYPES } from "@/db/schema";
+import { FUEL_TYPES, TRIP_TYPES, type FillUp, type FuelType, type TripType, type Vehicle } from "@/db/schema";
 import type { WithMetrics } from "@/services/efficiency";
-import {
-	computeFuelEfficiencyTrend,
-	computeFuelTypeStats,
-	type FuelEfficiencyTrend,
-	type FuelTypeStats,
-} from "@/services/fuel-comparison";
+import { computeFuelTypeStats, type FuelTypeStats } from "@/services/fuel-comparison";
 import { getVehicleFillUpsWithMetrics } from "@/services/fillups";
 import { detectOutliers } from "@/services/outliers";
 import { computeDaysSinceLastFillUp } from "@/services/stats";
+import { computeTripTypeStats, type TripTypeStats } from "@/services/trip-comparison";
 
 export type DashboardFillUp = WithMetrics<FillUp> & { isPersonalBest: boolean };
 
@@ -17,19 +12,12 @@ export interface DashboardData {
 	vehicle: Vehicle;
 	fillUps: DashboardFillUp[];
 	daysSinceLastFillUp: number | null;
+	/** Unfiltered — gasoline vs. ethanol across all driving. */
 	perFuel: Record<FuelType, FuelTypeStats>;
-	efficiencyTrend: Record<FuelType, FuelEfficiencyTrend>;
-	/** Fuel type of the most recent fill-up — the fuel switcher's default selection. */
-	lastFillUpFuelType: FuelType;
-}
-
-function findLastFillUpFuelType(fillUps: readonly WithMetrics<FillUp>[]): FuelType {
-	const latest = fillUps.reduce<WithMetrics<FillUp> | null>((latest, f) => {
-		if (!latest) return f;
-		if (f.date !== latest.date) return f.date > latest.date ? f : latest;
-		return f.id > latest.id ? f : latest;
-	}, null);
-	return latest?.fuelType ?? FUEL_TYPES[0];
+	/** Unfiltered — road vs. city across both fuels. */
+	perTripType: Record<TripType, TripTypeStats>;
+	/** Gasoline vs. ethanol, computed separately within each trip type's rows — powers the split recommendation. */
+	perFuelByTripType: Record<TripType, Record<FuelType, FuelTypeStats>>;
 }
 
 /** Same outlier-excluded "record holder per fuel type" rule as get-fillups.ts and get-statistics.ts. */
@@ -60,16 +48,31 @@ export async function getDashboardData(vehicle: Vehicle): Promise<DashboardData>
 		FUEL_TYPES.map((fuelType) => [fuelType, computeFuelTypeStats(fillUps, fuelType, vehicle.tankCapacityLiters)]),
 	) as Record<FuelType, FuelTypeStats>;
 
-	const efficiencyTrend = Object.fromEntries(
-		FUEL_TYPES.map((fuelType) => [fuelType, computeFuelEfficiencyTrend(fillUps, fuelType)]),
-	) as Record<FuelType, FuelEfficiencyTrend>;
+	const perTripType = Object.fromEntries(
+		TRIP_TYPES.map((tripType) => [tripType, computeTripTypeStats(fillUps, tripType, vehicle.tankCapacityLiters)]),
+	) as Record<TripType, TripTypeStats>;
+
+	const perFuelByTripType = Object.fromEntries(
+		TRIP_TYPES.map((tripType) => {
+			const tripRows = fillUps.filter((f) => f.tripType === tripType);
+			return [
+				tripType,
+				Object.fromEntries(
+					FUEL_TYPES.map((fuelType) => [
+						fuelType,
+						computeFuelTypeStats(tripRows, fuelType, vehicle.tankCapacityLiters),
+					]),
+				) as Record<FuelType, FuelTypeStats>,
+			];
+		}),
+	) as Record<TripType, Record<FuelType, FuelTypeStats>>;
 
 	return {
 		vehicle,
 		fillUps: withPersonalBest(fillUps),
 		daysSinceLastFillUp: computeDaysSinceLastFillUp(fillUps),
 		perFuel,
-		efficiencyTrend,
-		lastFillUpFuelType: findLastFillUpFuelType(fillUps),
+		perTripType,
+		perFuelByTripType,
 	};
 }

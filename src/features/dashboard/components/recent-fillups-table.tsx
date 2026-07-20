@@ -30,6 +30,7 @@ export function RecentFillUpsTable({ fillUps }: { fillUps: DashboardFillUp[] }) 
 						<TableHead>Date</TableHead>
 						<TableHead>Odometer</TableHead>
 						<TableHead>Fuel type</TableHead>
+						<TableHead>Trip type</TableHead>
 						<TableHead>Liters</TableHead>
 						<TableHead>Total price</TableHead>
 						<TableHead>Full tank</TableHead>
@@ -42,6 +43,13 @@ export function RecentFillUpsTable({ fillUps }: { fillUps: DashboardFillUp[] }) 
 							<TableCell className="whitespace-nowrap tabular-nums">{formatDateDisplay(row.date)}</TableCell>
 							<TableCell className="whitespace-nowrap tabular-nums">{formatNumber(row.odometerKm)} km</TableCell>
 							<TableCell className="capitalize">{row.fuelType}</TableCell>
+							<TableCell>
+								{row.tripType === "road" ? (
+									<Badge variant="secondary">Road</Badge>
+								) : (
+									<Badge variant="outline">City</Badge>
+								)}
+							</TableCell>
 							<TableCell className="tabular-nums">{formatNumber(row.liters, { maximumFractionDigits: 2 })} L</TableCell>
 							<TableCell className="whitespace-nowrap tabular-nums">{formatCurrency(row.totalPrice)}</TableCell>
 							<TableCell>

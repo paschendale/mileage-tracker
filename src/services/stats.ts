@@ -6,19 +6,13 @@ export interface StatsFillUp {
 	totalPrice: number;
 	date: string; // ISO 'YYYY-MM-DD'
 	isFullTank: boolean;
+	distanceSincePreviousKm: number | null;
 	efficiencyKmPerL: number | null;
 }
 
-function sortedByOdometer(rows: readonly StatsFillUp[]): StatsFillUp[] {
-	return [...rows].sort((a, b) => a.odometerKm - b.odometerKm);
-}
-
-function fullTankIndexes(rows: readonly StatsFillUp[]): number[] {
-	const indexes: number[] = [];
-	rows.forEach((row, i) => {
-		if (row.isFullTank) indexes.push(i);
-	});
-	return indexes;
+/** Rows with a defined efficiency — each one a self-contained adjacent full-tank-to-full-tank leg. */
+function rowsWithEfficiency(rows: readonly StatsFillUp[]): StatsFillUp[] {
+	return rows.filter((r) => r.efficiencyKmPerL !== null);
 }
 
 export function computeTotalSpent(rows: readonly StatsFillUp[]): number {
@@ -50,23 +44,17 @@ export function computeAvgCostPerKm(rows: readonly StatsFillUp[]): number | null
 }
 
 /**
- * Weighted by the bounded full-tank region: (last full odometer - first full
- * odometer) / (liters consumed across that region), rather than an unweighted
- * mean of per-interval efficiency values, so longer intervals count more.
+ * Distance-weighted mean over exactly the rows with a defined `efficiencyKmPerL`
+ * (each an adjacent full-tank-to-full-tank leg): sum(distance) / sum(liters)
+ * across those rows, rather than an unweighted mean of per-leg values, so
+ * longer legs count more.
  */
 export function computeAvgKmPerL(rows: readonly StatsFillUp[]): number | null {
-	const sorted = sortedByOdometer(rows);
-	const indexes = fullTankIndexes(sorted);
-	if (indexes.length < 2) return null;
+	const legs = rowsWithEfficiency(rows);
+	if (legs.length === 0) return null;
 
-	const firstFull = indexes[0]!;
-	const lastFull = indexes[indexes.length - 1]!;
-	const distanceKm = sorted[lastFull]!.odometerKm - sorted[firstFull]!.odometerKm;
-
-	let litersSum = 0;
-	for (let i = firstFull + 1; i <= lastFull; i++) {
-		litersSum += sorted[i]!.liters;
-	}
+	const distanceKm = legs.reduce((sum, r) => sum + (r.distanceSincePreviousKm ?? 0), 0);
+	const litersSum = legs.reduce((sum, r) => sum + r.liters, 0);
 
 	return litersSum > 0 ? distanceKm / litersSum : null;
 }
@@ -93,23 +81,17 @@ export function computeDaysSinceLastFillUp(rows: readonly StatsFillUp[], today: 
 }
 
 /**
- * Mean of the per-interval distance covered between consecutive full tanks —
- * i.e. "historically, how far did a full tank actually last". No tank-capacity
- * field exists in the schema, so this is the only data-grounded estimate.
+ * Mean of `distanceSincePreviousKm` over the same rows used by `computeAvgKmPerL`
+ * (rows with a defined `efficiencyKmPerL`) — i.e. "historically, how far did a
+ * full tank actually last". No tank-capacity field exists in the schema, so
+ * this is the only data-grounded estimate.
  */
 export function computeEstimatedAutonomyKm(rows: readonly StatsFillUp[]): number | null {
-	const sorted = sortedByOdometer(rows);
-	const indexes = fullTankIndexes(sorted);
-	if (indexes.length < 2) return null;
+	const legs = rowsWithEfficiency(rows);
+	if (legs.length === 0) return null;
 
-	const distances: number[] = [];
-	for (let k = 1; k < indexes.length; k++) {
-		const previous = sorted[indexes[k - 1]!]!;
-		const current = sorted[indexes[k]!]!;
-		distances.push(current.odometerKm - previous.odometerKm);
-	}
-
-	return distances.reduce((sum, d) => sum + d, 0) / distances.length;
+	const total = legs.reduce((sum, r) => sum + (r.distanceSincePreviousKm ?? 0), 0);
+	return total / legs.length;
 }
 
 export interface MonthlyAggregate {

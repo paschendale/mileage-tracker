@@ -79,6 +79,7 @@ export function FillUpsTable({ rows, sort, dir, searchParams }: FillUpsTableProp
 							<SortableColumnHeader label="Odometer" field="odometerKm" {...headerProps} />
 						</TableHead>
 						<TableHead>Fuel type</TableHead>
+						<TableHead>Trip type</TableHead>
 						<TableHead>
 							<SortableColumnHeader label="Liters" field="liters" {...headerProps} />
 						</TableHead>
@@ -109,6 +110,13 @@ export function FillUpsTable({ rows, sort, dir, searchParams }: FillUpsTableProp
 								<TableCell className="whitespace-nowrap tabular-nums">{formatDateDisplay(row.date)}</TableCell>
 								<TableCell className="whitespace-nowrap tabular-nums">{formatNumber(row.odometerKm)} km</TableCell>
 								<TableCell className="capitalize">{row.fuelType}</TableCell>
+								<TableCell>
+									{row.tripType === "road" ? (
+										<Badge variant="secondary">Road</Badge>
+									) : (
+										<Badge variant="outline">City</Badge>
+									)}
+								</TableCell>
 								<TableCell className="tabular-nums">{formatNumber(row.liters, { maximumFractionDigits: 2 })} L</TableCell>
 								<TableCell className="whitespace-nowrap tabular-nums">{formatCurrency(row.totalPrice)}</TableCell>
 								<TableCell className="whitespace-nowrap tabular-nums">

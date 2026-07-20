@@ -1,9 +1,12 @@
 import { Car } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { StatCard } from "@/components/stat-card";
+import { TRIP_TYPES } from "@/db/schema";
 import { ChartsSection } from "@/features/dashboard/components/charts-section";
+import { DashboardChartsSection } from "@/features/dashboard/components/dashboard-charts-section";
+import { FuelComparisonTable } from "@/features/dashboard/components/fuel-comparison-table";
 import { FuelRecommendation } from "@/features/dashboard/components/fuel-recommendation";
-import { FuelSwitcherView } from "@/features/dashboard/components/fuel-switcher-view";
+import { TripComparisonTable } from "@/features/dashboard/components/trip-comparison-table";
 import { getDashboardData } from "@/features/dashboard/lib/get-dashboard-data";
 import { RecentFillUpsTable } from "@/features/dashboard/components/recent-fillups-table";
 import { VehicleThumbnail } from "@/features/vehicles/components/vehicle-thumbnail";
@@ -40,14 +43,15 @@ export default async function DashboardPage() {
 				/>
 			</div>
 
-			<FuelRecommendation perFuel={data.perFuel} />
+			{TRIP_TYPES.map((tripType) => (
+				<FuelRecommendation key={tripType} tripType={tripType} perFuel={data.perFuelByTripType[tripType]} />
+			))}
 
-			<FuelSwitcherView
-				fillUps={data.fillUps}
-				perFuel={data.perFuel}
-				efficiencyTrend={data.efficiencyTrend}
-				defaultFuelType={data.lastFillUpFuelType}
-			/>
+			<FuelComparisonTable perFuel={data.perFuel} />
+
+			<TripComparisonTable perTripType={data.perTripType} />
+
+			<DashboardChartsSection fillUps={data.fillUps} />
 
 			<ChartsSection fillUps={data.fillUps} />
 

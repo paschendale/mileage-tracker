@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { FUEL_TYPES, type FillUp, type FuelType } from "@/db/schema";
+import { FUEL_TYPES, TRIP_TYPES, type FillUp, type FuelType, type TripType } from "@/db/schema";
 import type { Vehicle } from "@/db/schema";
 import { dateToIsoString, formatCurrency, formatDateDisplay, isoStringToDate, sanitizeDecimalInput } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -22,6 +22,11 @@ import { updateFillUpAction } from "../actions/update-fillup";
 const FUEL_TYPE_LABELS: Record<FuelType, string> = {
 	gasoline: "Gasoline",
 	ethanol: "Ethanol",
+};
+
+const TRIP_TYPE_LABELS: Record<TripType, string> = {
+	road: "Road",
+	city: "City",
 };
 
 interface FillUpFormProps {
@@ -38,6 +43,7 @@ export function FillUpForm({ mode, fillUp, vehicles, defaultVehicleId }: FillUpF
 	const [date, setDate] = useState(fillUp?.date ?? dateToIsoString(new Date()));
 	const [odometerKm, setOdometerKm] = useState(fillUp ? String(fillUp.odometerKm) : "");
 	const [fuelType, setFuelType] = useState<FuelType>(fillUp?.fuelType ?? "gasoline");
+	const [tripType, setTripType] = useState<TripType | undefined>(fillUp?.tripType ?? undefined);
 	const [liters, setLiters] = useState(fillUp ? String(fillUp.liters) : "");
 	const [totalPrice, setTotalPrice] = useState(fillUp ? String(fillUp.totalPrice) : "");
 	const [isFullTank, setIsFullTank] = useState(fillUp?.isFullTank ?? true);
@@ -69,12 +75,14 @@ export function FillUpForm({ mode, fillUp, vehicles, defaultVehicleId }: FillUpF
 
 	function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
+		if (!tripType) return;
 
 		const input = {
 			vehicleId,
 			date,
 			odometerKm: Number.parseInt(odometerKm, 10),
 			fuelType,
+			tripType,
 			liters: litersValue,
 			totalPrice: totalPriceValue,
 			isFullTank,
@@ -94,7 +102,8 @@ export function FillUpForm({ mode, fillUp, vehicles, defaultVehicleId }: FillUpF
 		Number.isFinite(litersValue) &&
 		litersValue > 0 &&
 		Number.isFinite(totalPriceValue) &&
-		totalPriceValue > 0;
+		totalPriceValue > 0 &&
+		tripType !== undefined;
 
 	return (
 		<Card>
@@ -172,6 +181,24 @@ export function FillUpForm({ mode, fillUp, vehicles, defaultVehicleId }: FillUpF
 							{FUEL_TYPES.map((type) => (
 								<ToggleGroupItem key={type} value={type} className="flex-1">
 									{FUEL_TYPE_LABELS[type]}
+								</ToggleGroupItem>
+							))}
+						</ToggleGroup>
+					</div>
+
+					<div className="flex flex-col gap-1.5">
+						<span className="text-sm font-medium">Trip type</span>
+						<ToggleGroup
+							value={tripType ? [tripType] : []}
+							onValueChange={(values) => {
+								const next = values[0];
+								if (next) setTripType(next as TripType);
+							}}
+							className="w-full"
+						>
+							{TRIP_TYPES.map((type) => (
+								<ToggleGroupItem key={type} value={type} className="flex-1">
+									{TRIP_TYPE_LABELS[type]}
 								</ToggleGroupItem>
 							))}
 						</ToggleGroup>

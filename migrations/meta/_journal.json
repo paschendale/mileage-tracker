@@ -22,6 +22,20 @@
       "when": 1783390765062,
       "tag": "0002_careless_the_call",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1784498914130,
+      "tag": "0003_last_mindworm",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1784548492002,
+      "tag": "0004_normal_mindworm",
+      "breakpoints": true
     }
   ]
 }

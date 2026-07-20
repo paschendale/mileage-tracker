@@ -5,6 +5,9 @@ import { vehicles } from "./vehicle";
 export const FUEL_TYPES = ["gasoline", "ethanol"] as const;
 export type FuelType = (typeof FUEL_TYPES)[number];
 
+export const TRIP_TYPES = ["road", "city"] as const;
+export type TripType = (typeof TRIP_TYPES)[number];
+
 export const fillUps = sqliteTable(
 	"fill_ups",
 	{
@@ -24,6 +27,10 @@ export const fillUps = sqliteTable(
 		totalPrice: real("total_price").notNull(),
 		fuelType: text("fuel_type", { enum: FUEL_TYPES }).notNull(),
 		isFullTank: integer("is_full_tank", { mode: "boolean" }).notNull().default(true),
+		// NOT NULL with a 'city' default — a backfill safety net for historical
+		// rows (migration 0004), not a UX default; the form still requires an
+		// explicit choice for every new/edited fill-up (see fillup-schema.ts).
+		tripType: text("trip_type", { enum: TRIP_TYPES }).notNull().default("city"),
 		notes: text("notes"),
 	},
 	(table) => [
@@ -33,6 +40,7 @@ export const fillUps = sqliteTable(
 		// The actual hot access pattern is "all fill-ups for vehicle X ordered by odometer".
 		index("fill_ups_vehicle_odometer_idx").on(table.vehicleId, table.odometerKm),
 		check("fill_ups_fuel_type_check", sql`${table.fuelType} in ('gasoline','ethanol')`),
+		check("fill_ups_trip_type_check", sql`${table.tripType} in ('road','city')`),
 	],
 );
 

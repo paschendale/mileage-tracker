@@ -14,45 +14,43 @@ function row(id: number, odometerKm: number, liters: number, isFullTank: boolean
 }
 
 describe("withComputedMetrics", () => {
-	it("matches the spec's worked example: full, partial, full", () => {
+	it("computes efficiency for two immediately adjacent full tanks", () => {
+		const rows = [row(1, 0, 40, true), row(2, 450, 38, true)];
+
+		const result = withComputedMetrics(rows);
+
+		expect(result[1]!.efficiencyKmPerL).toBeCloseTo(450 / 38, 5);
+		expect(result[1]!.distanceSincePreviousKm).toBe(450);
+	});
+
+	it("discards the leg into a full tank when the immediately preceding row is a partial", () => {
 		const rows = [row(1, 450, 40, true), row(2, 700, 10, false), row(3, 900, 25, true)];
 
 		const result = withComputedMetrics(rows);
 
-		// The opening full tank (450km) mirrors the interval it opens, since it can
-		// never be anyone's "closing" row and would otherwise be permanently null.
-		expect(result[0]!.efficiencyKmPerL).toBeCloseTo((900 - 450) / (10 + 25), 5);
+		// row 2 (partial) never gets efficiency; row 3 is a full tank, but its
+		// immediate predecessor (row 2) is a partial, so the leg is discarded
+		// entirely rather than estimated from summed liters.
 		expect(result[1]!.efficiencyKmPerL).toBeNull();
-		expect(result[2]!.efficiencyKmPerL).toBeCloseTo((900 - 450) / (10 + 25), 5);
+		expect(result[2]!.efficiencyKmPerL).toBeNull();
 
+		// distanceSincePreviousKm is unaffected by tank status — always defined.
 		expect(result[0]!.distanceSincePreviousKm).toBeNull();
 		expect(result[1]!.distanceSincePreviousKm).toBe(250);
 		expect(result[2]!.distanceSincePreviousKm).toBe(200);
 	});
 
-	it("mirrors the first interval's efficiency onto the very first full tank of a vehicle's history", () => {
-		// This is the case that can never otherwise get a value: it has no
-		// preceding full tank, so under the base rule it would stay null forever.
+	it("the very first row in a vehicle's history is always null, regardless of tank status", () => {
 		const rows = [row(1, 0, 40, true), row(2, 477, 41.26, true)];
 
 		const result = withComputedMetrics(rows);
 
-		expect(result[1]!.efficiencyKmPerL).toBeCloseTo(477 / 41.26, 5);
-		expect(result[0]!.efficiencyKmPerL).toBeCloseTo(477 / 41.26, 5);
-	});
-
-	it("does not mirror onto the first row when it isn't itself a full tank", () => {
-		const rows = [row(1, 0, 40, false), row(2, 300, 35, true), row(3, 600, 30, true)];
-
-		const result = withComputedMetrics(rows);
-
-		// row 1 opens no interval of its own (it's a partial before the first full
-		// tank) -- it has nothing to mirror and correctly stays null.
+		// row 1 has no previous row to pair with — no more mirroring special case.
 		expect(result[0]!.efficiencyKmPerL).toBeNull();
-		expect(result[2]!.efficiencyKmPerL).toBeCloseTo(300 / 30, 5);
+		expect(result[1]!.efficiencyKmPerL).toBeCloseTo(477 / 41.26, 5);
 	});
 
-	it("handles a chain of two consecutive partials between two full tanks", () => {
+	it("discards a leg when the immediately preceding row is a partial, across a chain of partials", () => {
 		const rows = [
 			row(1, 0, 40, true),
 			row(2, 200, 8, false),
@@ -62,28 +60,30 @@ describe("withComputedMetrics", () => {
 
 		const result = withComputedMetrics(rows);
 
-		// distance 600-0=600, liters = 8 + 12 + 30 (partials + closing full)
-		expect(result[3]!.efficiencyKmPerL).toBeCloseTo(600 / (8 + 12 + 30), 5);
+		// row 4 is a full tank, but row 3 (its immediate predecessor) is a
+		// partial, so the leg into row 4 is discarded, not estimated.
 		expect(result[1]!.efficiencyKmPerL).toBeNull();
 		expect(result[2]!.efficiencyKmPerL).toBeNull();
+		expect(result[3]!.efficiencyKmPerL).toBeNull();
 	});
 
-	it("leaves efficiency null before the first full tank and with no closing full tank", () => {
+	it("leaves efficiency null when there's no adjacent full-tank pair at all", () => {
 		const rows = [row(1, 0, 40, false), row(2, 300, 35, true), row(3, 600, 10, false)];
 
 		const result = withComputedMetrics(rows);
 
 		expect(result[0]!.efficiencyKmPerL).toBeNull();
-		// only one full tank exists, so no interval can be closed
+		// row 2 is full, but row 1 (its predecessor) is a partial -> discarded.
 		expect(result[1]!.efficiencyKmPerL).toBeNull();
+		// row 3 is a partial -> never gets efficiency.
 		expect(result[2]!.efficiencyKmPerL).toBeNull();
 	});
 
 	it("cross-validates against a real slice of data.json (all rows treated as full tanks)", () => {
 		// First 6 entries from data.json, seeded with isFullTank = true per the
-		// project's seed decision. With every row a full tank, the algorithm
-		// degenerates to simple consecutive-row division — matching how the
-		// source file's own consumption_km_per_l values were computed.
+		// project's seed decision. With every row a full tank, every consecutive
+		// pair is adjacent-full-to-full, matching how the source file's own
+		// consumption_km_per_l values were computed.
 		const rows = [
 			row(1, 0, 39.15, true, "2025-11-07"),
 			row(2, 477, 41.26, true, "2025-11-12"),
@@ -102,12 +102,15 @@ describe("withComputedMetrics", () => {
 		expect(result[5]!.efficiencyKmPerL).toBeCloseTo(12.49, 1);
 	});
 
-	it("sorts unordered input by odometer before computing", () => {
+	it("sorts unordered input by odometer before computing, and pairs by adjacency after sorting", () => {
 		const rows = [row(3, 900, 25, true), row(1, 450, 40, true), row(2, 700, 10, false)];
 
 		const result = withComputedMetrics(rows);
 
 		expect(result.map((r) => r.id)).toEqual([1, 2, 3]);
-		expect(result[2]!.efficiencyKmPerL).toBeCloseTo((900 - 450) / (10 + 25), 5);
+		// After sorting: id1(450,full) -> id2(700,partial) -> id3(900,full).
+		// row id3's immediate predecessor (id2) is a partial, so the leg is
+		// discarded — this demonstrates sort-then-adjacency, not sort-then-sum.
+		expect(result[2]!.efficiencyKmPerL).toBeNull();
 	});
 });

@@ -17,6 +17,7 @@ export const createFillUpAction = authActionClient.inputSchema(fillUpSchema).act
 			liters: parsedInput.liters,
 			totalPrice: parsedInput.totalPrice,
 			fuelType: parsedInput.fuelType,
+			tripType: parsedInput.tripType,
 			isFullTank: parsedInput.isFullTank,
 			notes: parsedInput.notes || null,
 		})

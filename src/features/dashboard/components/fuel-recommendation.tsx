@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { FuelType } from "@/db/schema";
+import type { FuelType, TripType } from "@/db/schema";
 import { formatCurrency, formatDateDisplay, sanitizeDecimalInput } from "@/lib/format";
 import { computeFuelRecommendation, type FuelConfidence, type FuelTypeStats } from "@/services/fuel-comparison";
 import { FuelRecommendationScience } from "./fuel-recommendation-science";
 
 const FUEL_LABELS: Record<FuelType, string> = { gasoline: "Gasoline", ethanol: "Ethanol" };
+const TRIP_LABELS: Record<TripType, string> = { road: "Road", city: "City" };
 
 const CONFIDENCE_LABELS: Record<FuelConfidence, string> = {
 	low: "Low confidence",
@@ -25,7 +26,14 @@ function defaultPriceInput(stats: FuelTypeStats): string {
 	return stats.latestPricePerLiter !== null ? stats.latestPricePerLiter.toFixed(2) : "";
 }
 
-export function FuelRecommendation({ perFuel }: { perFuel: Record<FuelType, FuelTypeStats> }) {
+export function FuelRecommendation({
+	tripType,
+	perFuel,
+}: {
+	tripType: TripType;
+	perFuel: Record<FuelType, FuelTypeStats>;
+}) {
+	const idPrefix = `fuel-rec-${tripType}`;
 	const [mode, setMode] = useState<PriceMode>("recorded");
 	const [gasolinePrice, setGasolinePrice] = useState(() => defaultPriceInput(perFuel.gasoline));
 	const [ethanolPrice, setEthanolPrice] = useState(() => defaultPriceInput(perFuel.ethanol));
@@ -53,7 +61,7 @@ export function FuelRecommendation({ perFuel }: { perFuel: Record<FuelType, Fuel
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle>Fuel recommendation</CardTitle>
+				<CardTitle>Fuel recommendation — {TRIP_LABELS[tripType]}</CardTitle>
 				{recommendation?.confidence && (
 					<CardAction>
 						<Badge variant="secondary">{CONFIDENCE_LABELS[recommendation.confidence]}</Badge>
@@ -83,11 +91,11 @@ export function FuelRecommendation({ perFuel }: { perFuel: Record<FuelType, Fuel
 					<TabsContent value="custom" className="mt-3">
 						<div className="grid grid-cols-2 gap-3">
 							<div className="flex flex-col gap-1.5">
-								<label htmlFor="fuel-rec-gasoline" className="text-sm font-medium">
+								<label htmlFor={`${idPrefix}-gasoline`} className="text-sm font-medium">
 									Gasoline (R$/L)
 								</label>
 								<Input
-									id="fuel-rec-gasoline"
+									id={`${idPrefix}-gasoline`}
 									type="text"
 									inputMode="decimal"
 									value={gasolinePrice}
@@ -96,11 +104,11 @@ export function FuelRecommendation({ perFuel }: { perFuel: Record<FuelType, Fuel
 								/>
 							</div>
 							<div className="flex flex-col gap-1.5">
-								<label htmlFor="fuel-rec-ethanol" className="text-sm font-medium">
+								<label htmlFor={`${idPrefix}-ethanol`} className="text-sm font-medium">
 									Ethanol (R$/L)
 								</label>
 								<Input
-									id="fuel-rec-ethanol"
+									id={`${idPrefix}-ethanol`}
 									type="text"
 									inputMode="decimal"
 									value={ethanolPrice}

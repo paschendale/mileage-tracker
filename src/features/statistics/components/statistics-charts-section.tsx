@@ -6,7 +6,7 @@ import type { MonthlyFuelPricePoint } from "@/services/fuel-comparison";
 
 const ChartSkeleton = () => <Skeleton className="h-[21.5rem] w-full rounded-xl" />;
 
-const PriceTrendChart = dynamic(() => import("./price-trend-chart").then((m) => m.PriceTrendChart), {
+const PriceTrendChart = dynamic(() => import("@/components/charts/price-trend-chart").then((m) => m.PriceTrendChart), {
 	ssr: false,
 	loading: ChartSkeleton,
 });

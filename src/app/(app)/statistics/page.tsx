@@ -4,6 +4,7 @@ import { FuelComparisonTable } from "@/features/statistics/components/fuel-compa
 import { SpendingBreakdownTables } from "@/features/statistics/components/spending-breakdown-tables";
 import { StatisticsChartsSection } from "@/features/statistics/components/statistics-charts-section";
 import { StatisticsGrid } from "@/features/statistics/components/statistics-grid";
+import { TripComparisonTable } from "@/features/statistics/components/trip-comparison-table";
 import { getStatisticsData } from "@/features/statistics/queries/get-statistics";
 import { getSelectedVehicleContext } from "@/lib/selected-vehicle";
 
@@ -27,6 +28,8 @@ export default async function StatisticsPage() {
 			<StatisticsGrid data={data} />
 
 			<FuelComparisonTable perFuel={data.perFuel} />
+
+			<TripComparisonTable perTripType={data.perTripType} />
 
 			<StatisticsChartsSection priceTrend={data.priceTrend} />
 

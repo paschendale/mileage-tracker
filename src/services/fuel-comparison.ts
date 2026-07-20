@@ -1,19 +1,19 @@
 import { FUEL_TYPES, type FuelType } from "@/db/schema";
 import { groupBy } from "@/utils/group-by";
-import { findFullTankIntervals, sortByOdometer, type MinimalFillUp } from "./efficiency";
+import { sortByOdometer, type MinimalFillUp, type WithMetrics } from "./efficiency";
 
-export interface FuelComparisonFillUp extends MinimalFillUp {
+export interface FuelComparisonFillUp extends WithMetrics<MinimalFillUp> {
 	totalPrice: number;
 	fuelType: FuelType;
 }
 
 export interface FuelTypeStats {
 	fuelType: FuelType;
-	/** Weighted avg km/L over full-tank intervals OPENED by this fuel. */
+	/** Weighted avg km/L over legs (adjacent full-tank pairs) closed by this fuel. */
 	avgKmPerL: number | null;
 	/** tankCapacityLiters * avgKmPerL — "how far a full tank of this fuel lasts". Null if capacity is unknown. */
 	estimatedAutonomyKm: number | null;
-	/** Total distance covered by intervals opened by this fuel. */
+	/** Total distance covered by legs closed by this fuel. */
 	distanceTraveledKm: number;
 	/** Sample size behind the two numbers above — gates recommendation reliability. */
 	intervalCount: number;
@@ -31,23 +31,21 @@ export interface FuelTypeStats {
 }
 
 /**
- * The fuel that "powered" a full-tank interval is whichever fuel was filled at
- * the OPENING full tank, not the closing one — a flex-fuel car runs on what's
- * already in the tank until the next fill-up, regardless of what's poured in
- * at that next (closing) fill-up. Naively filtering the flat row array by each
- * row's own fuelType before reusing full-tank-interval math would misattribute
- * distance/efficiency to the wrong fuel; intervals must be grouped by `open.fuelType`.
+ * A "leg" is a row with a defined `efficiencyKmPerL` (an adjacent full-tank
+ * pair), attributed to its own `fuelType` — the fuel poured at the closing
+ * fill-up of that leg. `totalSpent`/`totalLiters`/`fillUpCount`/`avgFuelPrice`
+ * use every row of this fuel type (not just legs), since those aren't
+ * consumption math.
  */
 export function computeFuelTypeStats(
 	rows: readonly FuelComparisonFillUp[],
 	fuelType: FuelType,
 	tankCapacityLiters?: number | null,
 ): FuelTypeStats {
-	const sorted = sortByOdometer(rows);
-	const intervals = findFullTankIntervals(sorted).filter((interval) => interval.open.fuelType === fuelType);
+	const legs = rows.filter((r) => r.efficiencyKmPerL !== null && r.fuelType === fuelType);
 
-	const distanceTraveledKm = intervals.reduce((sum, interval) => sum + interval.distanceKm, 0);
-	const litersSum = intervals.reduce((sum, interval) => sum + interval.litersSum, 0);
+	const distanceTraveledKm = legs.reduce((sum, r) => sum + (r.distanceSincePreviousKm ?? 0), 0);
+	const litersSum = legs.reduce((sum, r) => sum + r.liters, 0);
 	const avgKmPerL = litersSum > 0 ? distanceTraveledKm / litersSum : null;
 	const estimatedAutonomyKm =
 		tankCapacityLiters !== null && tankCapacityLiters !== undefined && avgKmPerL !== null
@@ -73,7 +71,7 @@ export function computeFuelTypeStats(
 		avgKmPerL,
 		estimatedAutonomyKm,
 		distanceTraveledKm,
-		intervalCount: intervals.length,
+		intervalCount: legs.length,
 		latestPricePerLiter,
 		latestFillUpDate,
 		avgCostPerKm,
@@ -205,9 +203,10 @@ function weightedAvgKmPerL(intervals: readonly { distanceKm: number; litersSum: 
 }
 
 /**
- * Compares a fuel's recent efficiency (last `windowSize` full-tank intervals)
- * against its lifetime average, to answer "is this vehicle getting more or
- * less efficient lately". Same open.fuelType attribution as computeFuelTypeStats.
+ * Compares a fuel's recent efficiency (last `windowSize` legs) against its
+ * lifetime average, to answer "is this vehicle getting more or less efficient
+ * lately". Same closing-row attribution as computeFuelTypeStats. Legs are
+ * sorted by odometer so `.slice(-windowSize)` actually means "most recent".
  */
 export function computeFuelEfficiencyTrend(
 	rows: readonly FuelComparisonFillUp[],
@@ -215,7 +214,9 @@ export function computeFuelEfficiencyTrend(
 	windowSize = TREND_WINDOW,
 ): FuelEfficiencyTrend {
 	const sorted = sortByOdometer(rows);
-	const intervals = findFullTankIntervals(sorted).filter((interval) => interval.open.fuelType === fuelType);
+	const intervals = sorted
+		.filter((r) => r.efficiencyKmPerL !== null && r.fuelType === fuelType)
+		.map((r) => ({ distanceKm: r.distanceSincePreviousKm ?? 0, litersSum: r.liters }));
 
 	const recentIntervals = intervals.slice(-windowSize);
 	const recentAvgKmPerL = weightedAvgKmPerL(recentIntervals);
@@ -275,4 +276,26 @@ export function computeMonthlyFuelPriceTrend(rows: readonly FuelComparisonFillUp
 			return point;
 		})
 		.sort((a, b) => a.month.localeCompare(b.month));
+}
+
+export interface FuelEfficiencyPoint {
+	date: string;
+	gasoline: number | null;
+	ethanol: number | null;
+}
+
+/**
+ * One point per leg (row with a defined efficiencyKmPerL), sorted by odometer,
+ * value placed under whichever fuel closed that leg and null for the other —
+ * feeds a 2-line chart via MultiSeriesLineChart, whose connectNulls handles
+ * each line skipping over the other fuel's points.
+ */
+export function computeFuelEfficiencyPoints(rows: readonly FuelComparisonFillUp[]): FuelEfficiencyPoint[] {
+	const legs = sortByOdometer(rows).filter((r) => r.efficiencyKmPerL !== null);
+
+	return legs.map((r) => ({
+		date: r.date,
+		gasoline: r.fuelType === "gasoline" ? r.efficiencyKmPerL! : null,
+		ethanol: r.fuelType === "ethanol" ? r.efficiencyKmPerL! : null,
+	}));
 }

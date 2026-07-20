@@ -252,6 +252,28 @@ export function FuelRecommendationScience({
 				/>
 			</div>
 
+			{gasoline.estimatedAutonomyKm !== null && ethanol.estimatedAutonomyKm !== null && (
+				<div className="flex flex-col gap-2">
+					<p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+						Estimated autonomy (per full tank)
+					</p>
+					<MetricBar
+						label="Gasoline"
+						value={gasoline.estimatedAutonomyKm}
+						maxValue={Math.max(gasoline.estimatedAutonomyKm, ethanol.estimatedAutonomyKm)}
+						isWinner={gasoline.estimatedAutonomyKm > ethanol.estimatedAutonomyKm}
+						formatValue={(v) => `${formatNumber(v, { maximumFractionDigits: 0 })} km`}
+					/>
+					<MetricBar
+						label="Ethanol"
+						value={ethanol.estimatedAutonomyKm}
+						maxValue={Math.max(gasoline.estimatedAutonomyKm, ethanol.estimatedAutonomyKm)}
+						isWinner={ethanol.estimatedAutonomyKm > gasoline.estimatedAutonomyKm}
+						formatValue={(v) => `${formatNumber(v, { maximumFractionDigits: 0 })} km`}
+					/>
+				</div>
+			)}
+
 			<BreakEvenMeter todayPrice={todayEthanolPrice} breakEvenPrice={breakEvenEthanolPricePerLiter!} />
 
 			<RatioMeter todayRatioPercent={todayPriceRatio! * 100} personalizedRatioPercent={personalizedEthanolRatio! * 100} />

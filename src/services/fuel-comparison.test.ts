@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { FuelType } from "@/db/schema";
+import { withComputedMetrics } from "./efficiency";
 import {
 	computeFuelEfficiencyTrend,
 	computeFuelRecommendation,
@@ -26,6 +27,16 @@ function fuelTypeStats(overrides: Partial<FuelTypeStats> & Pick<FuelTypeStats, "
 	};
 }
 
+interface RawRow {
+	id: number;
+	odometerKm: number;
+	liters: number;
+	totalPrice: number;
+	fuelType: FuelType;
+	isFullTank: boolean;
+	date: string;
+}
+
 function row(
 	id: number,
 	odometerKm: number,
@@ -34,52 +45,58 @@ function row(
 	fuelType: FuelType,
 	isFullTank: boolean,
 	date = "2026-01-01",
-): FuelComparisonFillUp {
+): RawRow {
 	return { id, odometerKm, liters, totalPrice, fuelType, isFullTank, date };
 }
 
+/** Mirrors production: withComputedMetrics runs first, then services consume the result. */
+function withMetrics(rows: readonly RawRow[]): FuelComparisonFillUp[] {
+	return withComputedMetrics(rows);
+}
+
 describe("computeFuelTypeStats", () => {
-	it("attributes an interval to the OPENING full tank's fuel, not the closing one", () => {
-		// Gasoline@0km opens, ethanol@500km closes: 500km were driven on gasoline,
-		// even though the closing fill-up (which conventionally displays efficiency) is ethanol.
-		const rows = [
+	it("attributes a leg to the CLOSING fill-up's fuel, not the opening one", () => {
+		// Gasoline@0km opens, ethanol@500km closes: the leg's liters (35L) were
+		// poured in at the ethanol fill-up, so the leg belongs to ethanol now.
+		const rows = withMetrics([
 			row(1, 0, 40, 200, "gasoline", true, "2026-01-01"),
 			row(2, 500, 35, 250, "ethanol", true, "2026-01-10"),
-		];
+		]);
 
 		const gasoline = computeFuelTypeStats(rows, "gasoline");
 		const ethanol = computeFuelTypeStats(rows, "ethanol");
 
-		expect(gasoline.intervalCount).toBe(1);
-		expect(gasoline.distanceTraveledKm).toBe(500);
-		expect(gasoline.avgKmPerL).toBeCloseTo(500 / 35, 5);
+		expect(ethanol.intervalCount).toBe(1);
+		expect(ethanol.distanceTraveledKm).toBe(500);
+		expect(ethanol.avgKmPerL).toBeCloseTo(500 / 35, 5);
 
+		expect(gasoline.intervalCount).toBe(0);
+		expect(gasoline.distanceTraveledKm).toBe(0);
+		expect(gasoline.avgKmPerL).toBeNull();
+	});
+
+	it("discards the leg into a full tank whose immediate predecessor is a partial", () => {
+		const rows = withMetrics([
+			row(1, 0, 40, 200, "ethanol", true, "2026-01-01"),
+			row(2, 200, 8, 45, "ethanol", false, "2026-01-05"),
+			row(3, 600, 30, 160, "ethanol", true, "2026-01-15"),
+		]);
+
+		const ethanol = computeFuelTypeStats(rows, "ethanol");
+
+		// row 3's predecessor (row 2) is a partial, so the leg is discarded --
+		// no leg-based numbers for ethanol despite all three rows being ethanol.
 		expect(ethanol.intervalCount).toBe(0);
 		expect(ethanol.distanceTraveledKm).toBe(0);
 		expect(ethanol.avgKmPerL).toBeNull();
 	});
 
-	it("sums liters of partials in an interval opened by one fuel and closed with the same fuel", () => {
-		const rows = [
-			row(1, 0, 40, 200, "ethanol", true, "2026-01-01"),
-			row(2, 200, 8, 45, "ethanol", false, "2026-01-05"),
-			row(3, 600, 30, 160, "ethanol", true, "2026-01-15"),
-		];
-
-		const ethanol = computeFuelTypeStats(rows, "ethanol");
-
-		expect(ethanol.intervalCount).toBe(1);
-		expect(ethanol.distanceTraveledKm).toBe(600);
-		expect(ethanol.avgKmPerL).toBeCloseTo(600 / (8 + 30), 5);
-	});
-
 	it("computes estimated autonomy as tank capacity times measured avg km/L", () => {
-		const rows = [
+		const rows = withMetrics([
 			row(1, 0, 40, 200, "ethanol", true, "2026-01-01"),
-			row(2, 200, 8, 45, "ethanol", false, "2026-01-05"),
-			row(3, 600, 30, 160, "ethanol", true, "2026-01-15"),
-		];
-		const avgKmPerL = 600 / (8 + 30);
+			row(2, 450, 38, 210, "ethanol", true, "2026-01-15"),
+		]);
+		const avgKmPerL = 450 / 38;
 
 		const withCapacity = computeFuelTypeStats(rows, "ethanol", 50);
 		expect(withCapacity.estimatedAutonomyKm).toBeCloseTo(50 * avgKmPerL, 5);
@@ -90,11 +107,11 @@ describe("computeFuelTypeStats", () => {
 		expect(withoutCapacity.estimatedAutonomyKm).toBeNull();
 	});
 
-	it("computes historical avgFuelPrice and latestPricePerLiter across all rows of a fuel, interval-agnostic", () => {
-		const rows = [
+	it("computes historical avgFuelPrice and latestPricePerLiter across all rows of a fuel, leg-agnostic", () => {
+		const rows = withMetrics([
 			row(1, 0, 40, 200, "gasoline", true, "2026-01-01"),
 			row(2, 400, 38, 220, "gasoline", true, "2026-02-01"),
-		];
+		]);
 
 		const gasoline = computeFuelTypeStats(rows, "gasoline");
 
@@ -107,7 +124,7 @@ describe("computeFuelTypeStats", () => {
 	});
 
 	it("returns nulls and zero counts when a fuel type has no rows at all", () => {
-		const rows = [row(1, 0, 40, 200, "gasoline", true, "2026-01-01")];
+		const rows = withMetrics([row(1, 0, 40, 200, "gasoline", true, "2026-01-01")]);
 
 		const ethanol = computeFuelTypeStats(rows, "ethanol");
 
@@ -187,14 +204,14 @@ describe("computeFuelRecommendation", () => {
 
 describe("computeFuelEfficiencyTrend", () => {
 	it("reports 'up' when the recent window is meaningfully more efficient than the lifetime average", () => {
-		const rows = [
+		const rows = withMetrics([
 			row(1, 0, 10, 50, "gasoline", true),
 			row(2, 100, 10, 50, "gasoline", true),
 			row(3, 200, 10, 50, "gasoline", true),
 			row(4, 300, 10, 50, "gasoline", true),
 			row(5, 400, 8, 50, "gasoline", true),
 			row(6, 500, 8, 50, "gasoline", true),
-		];
+		]);
 
 		const trend = computeFuelEfficiencyTrend(rows, "gasoline");
 
@@ -207,14 +224,14 @@ describe("computeFuelEfficiencyTrend", () => {
 	});
 
 	it("reports 'down' when the recent window is meaningfully less efficient than the lifetime average", () => {
-		const rows = [
+		const rows = withMetrics([
 			row(1, 0, 8, 50, "gasoline", true),
 			row(2, 100, 8, 50, "gasoline", true),
 			row(3, 200, 10, 50, "gasoline", true),
 			row(4, 300, 10, 50, "gasoline", true),
 			row(5, 400, 10, 50, "gasoline", true),
 			row(6, 500, 10, 50, "gasoline", true),
-		];
+		]);
 
 		const trend = computeFuelEfficiencyTrend(rows, "gasoline");
 
@@ -223,14 +240,14 @@ describe("computeFuelEfficiencyTrend", () => {
 	});
 
 	it("reports 'flat' when the recent window matches the lifetime average within the threshold", () => {
-		const rows = [
+		const rows = withMetrics([
 			row(1, 0, 10, 50, "gasoline", true),
 			row(2, 100, 10, 50, "gasoline", true),
 			row(3, 200, 10, 50, "gasoline", true),
 			row(4, 300, 10, 50, "gasoline", true),
 			row(5, 400, 10, 50, "gasoline", true),
 			row(6, 500, 10, 50, "gasoline", true),
-		];
+		]);
 
 		const trend = computeFuelEfficiencyTrend(rows, "gasoline");
 
@@ -239,11 +256,11 @@ describe("computeFuelEfficiencyTrend", () => {
 	});
 
 	it("has insufficient history with fewer than windowSize+2 intervals, but still leaves direction null", () => {
-		const rows = [
+		const rows = withMetrics([
 			row(1, 0, 10, 50, "gasoline", true),
 			row(2, 100, 10, 50, "gasoline", true),
 			row(3, 200, 10, 50, "gasoline", true),
-		];
+		]);
 
 		const trend = computeFuelEfficiencyTrend(rows, "gasoline");
 
@@ -252,8 +269,8 @@ describe("computeFuelEfficiencyTrend", () => {
 		expect(trend.deltaPercent).toBeNull();
 	});
 
-	it("returns all nulls and zero sample size when the fuel type has no full-tank intervals at all", () => {
-		const rows = [row(1, 0, 40, 200, "gasoline", true)];
+	it("returns all nulls and zero sample size when the fuel type has no legs at all", () => {
+		const rows = withMetrics([row(1, 0, 40, 200, "gasoline", true)]);
 
 		const trend = computeFuelEfficiencyTrend(rows, "ethanol");
 
@@ -263,17 +280,17 @@ describe("computeFuelEfficiencyTrend", () => {
 		expect(trend.sampleSize).toBe(0);
 	});
 
-	it("only considers intervals opened by the given fuel type, matching computeFuelTypeStats' attribution", () => {
-		const rows = [
+	it("only considers legs closed by the given fuel type, matching computeFuelTypeStats' attribution", () => {
+		const rows = withMetrics([
 			row(1, 0, 10, 50, "gasoline", true),
 			row(2, 100, 10, 50, "gasoline", true),
 			row(3, 200, 10, 50, "gasoline", true),
 			row(4, 300, 10, 50, "gasoline", true),
 			row(5, 400, 10, 50, "gasoline", true),
 			row(6, 500, 10, 50, "gasoline", true),
-			// A single ethanol interval shouldn't leak into the gasoline trend.
+			// A single ethanol leg shouldn't leak into the gasoline trend.
 			row(7, 600, 7, 50, "ethanol", true),
-		];
+		]);
 
 		const gasolineTrend = computeFuelEfficiencyTrend(rows, "gasoline");
 		const ethanolTrend = computeFuelEfficiencyTrend(rows, "ethanol");
@@ -285,11 +302,11 @@ describe("computeFuelEfficiencyTrend", () => {
 
 describe("computeMonthlyFuelPriceTrend", () => {
 	it("computes a per-fuel avg price/L per month, leaving a fuel null in months with no purchase", () => {
-		const rows = [
+		const rows = withMetrics([
 			row(1, 0, 40, 200, "gasoline", true, "2026-01-05"), // 5.00/L
 			row(2, 400, 38, 209, "gasoline", true, "2026-01-20"), // 5.50/L
 			row(3, 800, 35, 210, "ethanol", true, "2026-02-01"), // 6.00/L
-		];
+		]);
 
 		const trend = computeMonthlyFuelPriceTrend(rows);
 
